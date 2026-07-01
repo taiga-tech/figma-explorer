@@ -6,3 +6,4 @@
 - contributor guide を作るときは `README.md` `package.json` `docs/` `git log` を根拠にし、未整備のテストは推測せず明記する
 - Plasmo 初期生成直後は `package.json` の `name` `displayName` `description` と `popup.tsx` の文言を早めに実プロジェクト名へ置き換える
 - PR を作成するときは本文に `Closes #<issue-number>` を入れて、対応 Issue と自動で紐づける
+- GitHub の操作は `gh` を使い、Issue 確認、PR 作成、PR 更新も `gh` コマンドで統一する
