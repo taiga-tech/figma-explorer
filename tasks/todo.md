@@ -45,3 +45,33 @@
 - frontmatter を GitHub Issue Template 向けの `name/about/title/labels/assignees` に修正した
 - タイトル形式の案内をテンプレート本体へ戻した
 - 壊れていたコードブロックを閉じ、記入例まで 1 ファイルで読める状態にした
+
+## docs から GitHub Issue を起票する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` を起票内容の正本として扱う
+- 既存 Issue と重複しないように確認してから作成する
+- タイトル、ラベル、本文は `.github/ISSUE_TEMPLATE/task.md` の形式に合わせる
+- 作成結果は `tasks/todo.md` に記録する
+
+### 実施計画
+
+- [x] `docs/project/github-issues-v0.1.md` と `.github/ISSUE_TEMPLATE/task.md` を確認する
+- [x] 既存 Issue の有無を確認する
+- [x] 起票対象のタイトル、ラベル、本文を整形する
+- [x] GitHub に Issue を作成する
+- [x] 作成結果を確認してレビューを追記する
+
+### 進捗メモ
+
+- GitHub 上の `taiga-tech/figma-explorer` には open / closed とも既存 Issue は 0 件だった
+- `gh` で GitHub API へ接続し、docs 定義の 12 個のカスタムラベルを作成した
+- `docs/project/github-issues-v0.1.md` を元に 19 件の Issue を起票した
+- 並列起票したため、GitHub の Issue 番号は docs 上の列挙順とは一致しない
+
+### レビュー
+
+- `taiga-tech/figma-explorer` に v0.1 向け 19 Issue を起票した
+- `type:*`, `area:*`, `priority:high` のカスタムラベルを GitHub 上に作成した
+- Issue 本文は `docs/` と `.github/ISSUE_TEMPLATE/task.md` を参照して整形した
