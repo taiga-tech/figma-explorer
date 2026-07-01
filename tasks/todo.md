@@ -75,3 +75,50 @@
 - `taiga-tech/figma-explorer` に v0.1 向け 19 Issue を起票した
 - `type:*`, `area:*`, `priority:high` のカスタムラベルを GitHub 上に作成した
 - Issue 本文は `docs/` と `.github/ISSUE_TEMPLATE/task.md` を参照して整形した
+
+## AGENTS.md contributor guide 作成
+
+### 仕様
+
+- ルートに `AGENTS.md` が未作成であることを確認してから新規作成する
+- 文書タイトルは `Repository Guidelines` とする
+- 実在する構成、コマンド、整形規約、コミット傾向だけを書き、未整備のテストはそのまま明記する
+- 200〜400 words 程度で短く保守しやすい contributor guide にする
+
+### 実施計画
+
+- [x] ルートの `AGENTS.md` の有無を確認する
+- [x] `README.md` `package.json` `docs/` `.prettierrc.mjs` `git log` を確認する
+- [x] リポジトリ固有の contributor guide を作成する
+- [x] 文量と内容を確認する
+
+### レビュー
+
+- `AGENTS.md` を新規作成し、Plasmo 拡張の構成、主要 `pnpm` コマンド、Prettier 規約、現状の手動検証方針を整理した
+- コミットメッセージ傾向は既存履歴に合わせて短い命令形として案内した
+- セキュリティ注意点として現行の host permissions と `docs/architecture/` の参照先を明記した
+
+## Issue 001: Plasmoプロジェクトを作成する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 001 を実装対象とする
+- 既存の Plasmo 初期生成物をこのリポジトリ向けの内容に更新する
+- README に Chrome 向けの開発起動手順を明記する
+- `pnpm dev` と `pnpm build` で開発・本番ビルドが通る状態を確認する
+
+### 実施計画
+
+- [x] Issue 001 の受け入れ条件と現状の差分を確認する
+- [x] `git flow feature start issue-001-plasmo-project` でブランチを作成する
+- [x] `README.md` をこの拡張向けの開発手順へ更新する
+- [x] `package.json` と `popup.tsx` の初期プレースホルダを置き換える
+- [x] `pnpm dev` と `pnpm build` を実行して確認する
+- [x] レビューと検証結果を追記する
+
+### レビュー
+
+- `feature/issue-001-plasmo-project` を `git flow feature start` で作成した
+- `README.md` を Figma Explorer 向けの開発手順へ更新し、`build/chrome-mv3-dev` の読み込み方法を明記した
+- `package.json` の `name` `displayName` `description` と `popup.tsx` の初期文言を実プロジェクト向けへ置き換えた
+- `pnpm build` で `build/chrome-mv3-prod` を生成し、`pnpm dev` で `build/chrome-mv3-dev` の生成を確認した
