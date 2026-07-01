@@ -1,33 +1,51 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# Figma Explorer
 
-## Getting Started
+Figma Drafts 画面を対象にした Chrome 拡張の開発ベースです。現在は
+Plasmo を使った最小構成で、今後 content scripts と整理パネルを追加していきます。
 
-First, run the development server:
+## セットアップ
+
+```bash
+pnpm install
+```
+
+## 開発起動
 
 ```bash
 pnpm dev
-# or
-npm run dev
 ```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+`pnpm dev` を起動すると Chrome Manifest V3 向けの開発ビルドが
+`build/chrome-mv3-dev/` に生成されます。
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+Chrome で読み込む手順:
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+1. `chrome://extensions` を開く
+2. 右上の「デベロッパー モード」を有効にする
+3. 「パッケージ化されていない拡張機能を読み込む」を押す
+4. `build/chrome-mv3-dev` ディレクトリを選ぶ
 
-## Making production build
+開発中の主な編集対象:
 
-Run the following:
+- `popup.tsx`: 拡張ポップアップ
+- `contents/*.tsx`: Figma 上に挿入する UI
+- `contents/*.css`: content scripts 用スタイル
+
+`popup.tsx` の変更は開発ビルドへ反映されます。content scripts を追加した場合は、
+Chrome 側で拡張機能の再読み込みも行ってください。
+
+## 本番ビルド
 
 ```bash
 pnpm build
-# or
-npm run build
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+成果物は `build/` に出力されます。
 
-## Submit to the webstores
+## パッケージ作成
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+```bash
+pnpm package
+```
+
+配布用アーカイブを生成します。

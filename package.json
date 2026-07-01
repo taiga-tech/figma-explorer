@@ -1,8 +1,8 @@
 {
-  "name": "aaa",
-  "displayName": "Aaa",
+  "name": "figma-explorer",
+  "displayName": "Figma Explorer",
   "version": "0.0.1",
-  "description": "aaa",
+  "description": "Chrome extension for organizing Figma Drafts files",
   "author": "taiga-tech",
   "scripts": {
     "dev": "plasmo dev",
