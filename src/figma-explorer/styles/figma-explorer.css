@@ -1,0 +1,126 @@
+.figma-explorer-shell,
+.figma-explorer-shell * {
+  box-sizing: border-box;
+}
+
+.figma-explorer-shell {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2147483647;
+}
+
+.figma-explorer-panel {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  bottom: 24px;
+  width: min(320px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  pointer-events: auto;
+  border: 1px solid rgba(9, 18, 38, 0.08);
+  border-radius: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(242, 245, 255, 0.96),
+    rgba(255, 255, 255, 0.98)
+  );
+  box-shadow:
+    0 20px 50px rgba(15, 23, 42, 0.16),
+    0 2px 8px rgba(15, 23, 42, 0.08);
+  color: #132238;
+  font-family: "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+.figma-explorer-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.figma-explorer-panel__eyebrow {
+  margin: 0 0 6px;
+  color: #5b6b84;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.figma-explorer-panel__title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.figma-explorer-panel__badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #132238;
+  color: #f8fbff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.figma-explorer-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.figma-explorer-panel__lead {
+  margin: 0;
+  color: #30435e;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.figma-explorer-panel__meta {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.figma-explorer-panel__meta div {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.figma-explorer-panel__meta dt {
+  margin: 0 0 4px;
+  color: #71829e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.figma-explorer-panel__meta dd {
+  margin: 0;
+  color: #132238;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.figma-explorer-panel__section-title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.figma-explorer-panel__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: #30435e;
+  font-size: 13px;
+  line-height: 1.6;
+}

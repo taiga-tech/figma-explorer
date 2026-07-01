@@ -1,2 +1,8 @@
 [tasks.format]
 run ="pnpm format"
+
+[tasks.build]
+run ="pnpm build"
+
+[tasks.dev]
+run ="pnpm dev"

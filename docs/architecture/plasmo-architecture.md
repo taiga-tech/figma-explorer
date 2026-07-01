@@ -23,7 +23,7 @@ export const config = {
 }
 ```
 
-複数のContent Scripts UIを持つ場合は `contents/` 配下にentryを置く。
+このリポジトリでは source root を `src/` に寄せるため、Content Scripts UI の entry は `src/contents/` 配下に置く。
 
 ## 3. MAIN worldを使わない
 
@@ -50,16 +50,19 @@ export const organizerStorage = new Storage({
 figma-explorer/
 ├─ package.json
 ├─ tsconfig.json
-├─ contents/
-│  ├─ figma-explorer.tsx
-│  └─ figma-explorer.css
-├─ popup/
-│  └─ index.tsx
-├─ options/
-│  └─ index.tsx
-├─ background/
-│  └─ index.ts
 ├─ src/
+│  ├─ popup.tsx
+│  ├─ contents/
+│  │  └─ figma-explorer.tsx
+│  ├─ figma-explorer/
+│  │  ├─ components/
+│  │  ├─ constants/
+│  │  ├─ formatters/
+│  │  ├─ hooks/
+│  │  ├─ stores/
+│  │  ├─ styles/
+│  │  ├─ types/
+│  │  └─ utils/
 │  ├─ app/
 │  │  ├─ OrganizerApp.tsx
 │  │  ├─ organizer-actions.ts
@@ -114,14 +117,15 @@ pnpm dev
 
 ## 7. 責務分割
 
-| 領域                       | 役割                   |
-| -------------------------- | ---------------------- |
-| `contents/`                | FigmaページへのUI注入  |
-| `src/app`                  | アプリ全体の状態と操作 |
-| `src/components`           | React UI               |
-| `src/domain`               | 型、ドメイン定義       |
-| `src/features/scan`        | Figma DOM読み取り      |
-| `src/features/folders`     | 仮想フォルダ処理       |
-| `src/features/filters`     | 検索、絞り込み         |
-| `src/features/export-json` | JSON出力               |
-| `src/storage`              | Plasmo Storage保存     |
+| 領域                       | 役割                                    |
+| -------------------------- | --------------------------------------- |
+| `src/contents/`            | FigmaページへのUI注入 entry             |
+| `src/figma-explorer/`      | Figma content script 向けの補助ロジック |
+| `src/app`                  | アプリ全体の状態と操作                  |
+| `src/components`           | React UI                                |
+| `src/domain`               | 型、ドメイン定義                        |
+| `src/features/scan`        | Figma DOM読み取り                       |
+| `src/features/folders`     | 仮想フォルダ処理                        |
+| `src/features/filters`     | 検索、絞り込み                          |
+| `src/features/export-json` | JSON出力                                |
+| `src/storage`              | Plasmo Storage保存                      |
