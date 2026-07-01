@@ -27,11 +27,11 @@ Chrome で読み込む手順:
 
 開発中の主な編集対象:
 
-- `popup.tsx`: 拡張ポップアップ
-- `contents/*.tsx`: Figma 上に挿入する UI
-- `contents/*.css`: content scripts 用スタイル
+- `src/popup.tsx`: 拡張ポップアップ
+- `src/contents/*.tsx`: Figma 上に挿入する entry
+- `src/figma-explorer/**/*.ts(x)|css`: content script の補助ロジックとスタイル
 
-`popup.tsx` の変更は開発ビルドへ反映されます。content scripts を追加した場合は、
+`src/popup.tsx` の変更は開発ビルドへ反映されます。content scripts を追加した場合は、
 Chrome 側で拡張機能の再読み込みも行ってください。
 
 ## 本番ビルド

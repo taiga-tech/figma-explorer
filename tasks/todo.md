@@ -122,3 +122,37 @@
 - `README.md` を Figma Explorer 向けの開発手順へ更新し、`build/chrome-mv3-dev` の読み込み方法を明記した
 - `package.json` の `name` `displayName` `description` と `popup.tsx` の初期文言を実プロジェクト向けへ置き換えた
 - `pnpm build` で `build/chrome-mv3-prod` を生成し、`pnpm dev` で `build/chrome-mv3-dev` の生成を確認した
+
+## Issue 002: Content Scripts UIの入口を作成する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 002 を実装対象とする
+- `contents/figma-explorer.tsx` と `contents/figma-explorer.css` を追加する
+- `https://www.figma.com/*` でのみ content script を読み込み、Drafts 画面だけに仮の右側固定パネルを表示する
+- Drafts 判定は暫定的に URL の host と path を使って行い、後続 Issue の判定処理へ差し替えやすい形にする
+- Figma 標準 UI を塞がないように、非パネル領域では pointer events を透過させる
+
+### 実施計画
+
+- [x] Issue 002 の受け入れ条件と現在の Plasmo 構成を確認する
+- [x] `contents/figma-explorer.tsx` と `contents/figma-explorer.css` を実装する
+- [x] `pnpm build` を実行し、content script のビルドと manifest 出力を確認する
+- [x] レビュー結果と必要な教訓を追記する
+
+### レビュー
+
+- `feature/issue-002-content-scripts-ui-entry` を `git flow feature start` で作成した
+- `contents/figma-explorer.tsx` に `https://www.figma.com/*` 向けの Plasmo content script を追加した
+- Drafts 判定は暫定的に `www.figma.com` かつ `pathname` に `/drafts` を含むかで行い、Figma の SPA 遷移へ追従するため URL 変化を監視するようにした
+- `contents/figma-explorer.css` で右側固定の仮パネルを追加し、全画面ラッパーは `pointer-events: none`、実パネルのみ `pointer-events: auto` にして Figma 標準 UI を塞がないようにした
+- 既存 UI に被る不具合に対して、`contents/figma-explorer.tsx` で Drafts 表示中だけ `html` と `body` に右余白を適用し、Figma 側の描画領域を先に縮めるよう修正した
+- 右領域が広すぎる不具合に対して、余白適用を `body` の `padding-right` のみに絞り、過剰に横幅を縮めないよう修正した
+- `useEffect` を廃止し、URL 監視とページ余白制御を React コンポーネント外の監視ロジックへ移して `useSyncExternalStore` で購読する構成に変更した
+- source root を `src/` に切り替え、entry を `src/popup.tsx` と `src/contents/figma-explorer.tsx` へ移し、補助ロジックを `src/figma-explorer/` 配下へ責務分割した
+- Plasmo の制約に合わせて、`config.matches` は literal のまま残し、CSS は `src/contents/` の外へ移した
+- Drafts 判定を path segment ベースに厳密化し、`/drafts` 配下だけを対象にするよう修正した
+- Plasmo entry の export をより素朴な形に寄せ、`pnpm build --verbose` で出ていた parser 起因の内部エラーを解消した
+- 2026-07-01 時点で Chrome 上の手動確認を行い、Drafts 表示、`/file/...` 非表示、Figma 以外での非動作、既存 UI のクリック非阻害を確認した
+- `pnpm format` と `pnpm build --verbose` を実行し、content script のビルド成功を確認した
+- `react-doctor` は実行を試したが、この環境では応答が返らず中断した

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-- The current extension entrypoint is `popup.tsx`. Add new Plasmo pages at the repository root using conventions such as `options.tsx` or `content.ts`.
+- The current extension entrypoints live under `src/`, such as `src/popup.tsx` and `src/contents/figma-explorer.tsx`. Add new Plasmo pages under `src/` using the same conventions.
 - Store static assets in `assets/`.
 - Keep product and design docs under `docs/overview`, `docs/architecture`, `docs/project`, and `docs/reference`.
 - Track task plans and reviews in `tasks/todo.md`. Add reusable process learnings to `tasks/lessons.md`.
