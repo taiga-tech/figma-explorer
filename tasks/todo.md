@@ -420,3 +420,28 @@
 - `src/features/scan/extract-file-card-metadata.ts` から isolated world では原理的に成功しない fiber 探索コードを削除し、`data-figma-explorer-resolved-url` 属性を読むだけのシンプルな実装に置き換えた
 - Plasmo は `world: "MAIN"` の content script を `manifest.json` の静的 `content_scripts` ではなく `chrome.scripting.registerContentScripts` による動的登録で実装しており、既存の `src/background.ts` の再注入ロジックは静的 `content_scripts` しか見ていなかったため、既に開いていたタブには新しい bridge script が注入されない不備があった。`chrome.scripting.getRegisteredContentScripts()` を使った再注入処理を追加して解消した
 - `pnpm build` と `pnpm format` を実行し、ビルド成功と整形済みを確認した。次はユーザーに拡張機能の完全リロードと Figma タブの**フルリロード**（SPA 内遷移ではなく実ページ再読み込み）をしてもらい、再スキャン結果を確認してもらう
+- ユーザーが実機で動作確認し、ファイル名・URL の抽出が正しく機能することを確認した
+- 今回のセッションで新規作成していた `CLAUDE.md` は Issue 006 と無関係のため、コミットから除外した
+- `git commit` で `feature/issue-006-extract-file-name-url` に `extract file name and url from Figma draft cards` としてまとめてコミットした
+
+### Issue 006 の PR を作成する
+
+#### 仕様
+
+- `feature/issue-006-extract-file-name-url` から `develop` 向けの PR を作成する
+- PR 本文の先頭に `Closes #<issue-number>` を入れて GitHub Issue と紐づける
+- `gh` を使って PR を作成する
+
+#### 実施計画
+
+- [x] 対応 GitHub Issue 番号を確認する
+- [x] ブランチを publish する
+- [x] `gh` で draft PR を作成する
+
+#### レビュー
+
+- `gh issue list -R taiga-tech/figma-explorer --state all --limit 100 --json number,title` で Issue 006 の対応 GitHub Issue が `#5 [M2][scan] ファイル名とURLを抽出する` だと確認した
+- `gh pr list --head feature/issue-006-extract-file-name-url` では既存 PR は 0 件だった
+- `git push -u origin feature/issue-006-extract-file-name-url` でブランチを publish した
+- `gh pr create --draft --base develop --head feature/issue-006-extract-file-name-url` で draft PR `#25` を作成した
+- PR URL は `https://github.com/taiga-tech/figma-explorer/pull/25`、本文先頭には `Closes #5` を入れて Issue と紐づけた
