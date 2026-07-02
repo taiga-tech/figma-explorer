@@ -299,3 +299,27 @@
 - `FigmaFileType` は `design | figjam | slides | unknown`、`FileScanStatus` は `active | parse_error` として、後続の DOM 解析や失敗件数管理へ繋げやすい最小集合にした
 - `src/figma-explorer/components/FigmaExplorerPanel.tsx` の Next steps を現状の進捗に合わせて更新した
 - `pnpm build` を実行し、`plasmo build` の成功を確認した
+
+## Issue 004 の PR を作成する
+
+### 仕様
+
+- `feature/issue-004-draft-file-types` から `develop` 向けの PR を作成する
+- PR 本文の先頭に `Closes #9` を入れて GitHub Issue と紐づける
+- `gh` を使って PR を作成する
+- 作成結果は `tasks/todo.md` に記録する
+
+### 実施計画
+
+- [x] 現在のブランチ、対応 Issue、既存 PR の有無を確認する
+- [x] 必要ならブランチを publish する
+- [x] `gh` で PR を作成する
+- [x] 作成結果を確認してレビューを追記する
+
+### レビュー
+
+- `gh issue list -R taiga-tech/figma-explorer --state all --limit 100 --json number,title` で Issue 004 の対応 GitHub Issue が `#9 [M2][domain] DraftFile型を定義する` だと確認した
+- `gh pr list --head feature/issue-004-draft-file-types --json number,title,state,isDraft,url` では既存 PR は 0 件だった
+- `git flow feature publish issue-004-draft-file-types` で `origin/feature/issue-004-draft-file-types` を作成した
+- `gh pr create --draft --base develop --head feature/issue-004-draft-file-types` で draft PR `#23` を作成した
+- PR URL は `https://github.com/taiga-tech/figma-explorer/pull/23`、本文先頭には `Closes #9` を入れて Issue と紐づけた
