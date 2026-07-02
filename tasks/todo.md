@@ -349,3 +349,27 @@
 - `src/figma-explorer/components/FigmaExplorerPanel.tsx` から検出結果を表示するようにし、仮パネル上で候補件数または error 内容を確認できるようにした
 - 初回描画時に Drafts DOM がまだ揃っていないと stale な error 表示が残るため、`src/figma-explorer/stores/file-card-detection-store.ts` と `useSyncExternalStore` ベースの hook を追加し、DOM mutation 後に検出結果が再評価されるよう修正した
 - `pnpm format` と `pnpm build` を実行し、Prettier 整形と `plasmo build` の成功を確認した
+
+## Issue 005 の PR を作成する
+
+### 仕様
+
+- `feature/issue-005-detect-file-card-elements` から `develop` 向けの PR を作成する
+- PR 本文の先頭に `Closes #2` を入れて GitHub Issue と紐づける
+- `gh` を使って PR を作成する
+- 作成結果は `tasks/todo.md` に記録する
+
+### 実施計画
+
+- [x] 現在のブランチ、対応 Issue、既存 PR の有無を確認する
+- [x] 必要ならブランチを publish する
+- [x] `gh` で PR を作成する
+- [x] 作成結果を確認してレビューを追記する
+
+### レビュー
+
+- `gh issue list -R taiga-tech/figma-explorer --state all --limit 100 --json number,title` で Issue 005 の対応 GitHub Issue が `#2 [M2][scan] ファイルカード候補DOMを検出する` だと確認した
+- `gh pr list --head feature/issue-005-detect-file-card-elements --json number,title,state,isDraft,url` では既存 PR は 0 件だった
+- `git flow feature publish issue-005-detect-file-card-elements` で `origin/feature/issue-005-detect-file-card-elements` を作成した
+- `gh pr create --draft --base develop --head feature/issue-005-detect-file-card-elements` で draft PR `#24` を作成した
+- PR URL は `https://github.com/taiga-tech/figma-explorer/pull/24`、本文先頭には `Closes #2` を入れて Issue と紐づけた
