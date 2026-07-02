@@ -1,5 +1,5 @@
+import { detectDraftsPage } from "../../features/scan/detect-drafts-page"
 import { applyPageInset } from "../utils/apply-page-inset"
-import { isDraftsPage } from "../utils/is-drafts-page"
 
 const hrefListeners = new Set<() => void>()
 
@@ -14,7 +14,7 @@ const syncHrefState = () => {
   }
 
   currentHref = nextHref
-  applyPageInset(isDraftsPage(currentHref))
+  applyPageInset(detectDraftsPage(currentHref))
 
   hrefListeners.forEach((listener) => {
     listener()
@@ -53,7 +53,7 @@ const startLocationMonitor = () => {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", syncHrefState, { once: true })
   } else {
-    applyPageInset(isDraftsPage(currentHref))
+    applyPageInset(detectDraftsPage(currentHref))
   }
 }
 

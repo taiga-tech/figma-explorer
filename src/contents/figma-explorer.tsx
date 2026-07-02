@@ -1,9 +1,9 @@
 import cssText from "data-text:../figma-explorer/styles/figma-explorer.css"
 import type { PlasmoCSConfig } from "plasmo"
 
+import { detectDraftsPage } from "../features/scan/detect-drafts-page"
 import { FigmaExplorerPanel } from "../figma-explorer/components/FigmaExplorerPanel"
 import { useCurrentHref } from "../figma-explorer/hooks/use-current-href"
-import { isDraftsPage } from "../figma-explorer/utils/is-drafts-page"
 
 export const config: PlasmoCSConfig = {
   // Plasmo の config 解析は import 先の定数を追えないため、ここは literal を保つ。
@@ -19,7 +19,7 @@ export const getStyle = () => {
 function FigmaExplorerContent() {
   const href = useCurrentHref()
 
-  if (!isDraftsPage(href)) {
+  if (!detectDraftsPage(href)) {
     return null
   }
 

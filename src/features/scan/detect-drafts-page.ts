@@ -1,6 +1,6 @@
-import { DRAFTS_PATH_SEGMENT } from "../constants/figma-routes"
+import { DRAFTS_PATH_SEGMENT } from "../../figma-explorer/constants/figma-routes"
 
-export const isDraftsPage = (href: string) => {
+export const detectDraftsPage = (href: string) => {
   try {
     const url = new URL(href)
     const pathnameSegments = url.pathname.split("/").filter(Boolean)

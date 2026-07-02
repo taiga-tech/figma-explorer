@@ -17,3 +17,4 @@
 - `src/contents/` 配下には entry 以外を置かない。CSS や補助モジュールは別ディレクトリへ逃がす
 - Plasmo entry は export を素朴に保つ。型注釈や helper 経由を減らすと parser 起因の不安定さを避けやすい
 - URL ベースの画面判定は単純な `includes` ではなく path segment ベースで判定する
+- docs に `開発順序` がある場合、次に着手する Issue はマイルストーン名だけで判断せず、その連番順を最優先で確認する
