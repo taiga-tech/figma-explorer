@@ -26,3 +26,14 @@
 - DOM スキャンで 0 件と取得失敗を区別したいときは、候補要素の件数だけで判定せず、まず Drafts surface root を解決できたかどうかを status の分岐点にする
 - Figma Drafts のカードは `a` 要素とは限らない。まず `role=list` と `role=listitem[data-index]` の一覧構造を優先して拾い、`role=group` や `data-card-main-action` は後続の抽出で辿る
 - Figma の一覧 DOM は初回描画後に遅れて組み上がることがある。render 時の単発検出で止めず、DOM mutation を購読する外部ストア経由で再評価できる形にする
+- Figma のカード名抽出は `textContent` より `innerText` と属性値 (`aria-label` / `title` / `data-tooltip`) を優先し、更新日時らしい行を除外すると名前とメタ情報を分離しやすい
+- カード内部の抽出で selector を辿る helper は descendant だけでなく self も対象にする。`querySelector` だけにすると root 自体に付いた `data-card-main-action` や `href` を見落とす
+- Figma Drafts のカード URL は素の DOM に `href` として出ないことがある。`button[data-card-main-action]` ベースのカードでは React 内部 props/fiber 上の `/file/...` などのルート断片も調べる
+- React fiber からのフォールバック抽出は、リンク要素だけでなく実際のクリック領域（`actionRoot` など）自身の fiber も対象にする。null になりがちな `link` だけをスキャンしても情報は拾えない
+- fiber 経由でルート文字列を探すときは、`child`/`sibling`/`alternate` を辿ると他カードのデータが混ざるので除外したまま、`return` で祖先方向だけを数ホップ限定で辿るとラッパーコンポーネントの props/state まで届きやすい
+- fiber 祖先探索のホップ数は推測で小さく抑えず、実機の DevTools Console で祖先チェーンとマッチ位置を可視化してから必要な深さを決める。今回は実データが 11 ホップ先にあり、当初の 3 ホップでは全く届いていなかった
+- ブラウザの実 DOM/React 内部構造に依存する抽出処理は、コード修正だけを繰り返しても検証できない。ユーザーに DevTools Console で読み取り専用の診断スクリプトを実行してもらい、実際の fiber 構造（型名・prop キー・マッチ位置）を確認してから対処すると手戻りが減る
+- Chrome 拡張の content script は既定で isolated world で動き、ページ本体（React など）が DOM ノードに直接付与した expando プロパティ（`__reactFiber$` / `__reactProps$` など）は見えない。DevTools Console は既定で main world 実行なので、そこで見えても content script から見えるとは限らない。ページ本体の JS 内部状態を読む必要がある処理は、Plasmo の `config.world = "MAIN"` で別の content script として実装する
+- `world: "MAIN"` の Plasmo content script は `manifest.json` の静的 `content_scripts` ではなく `chrome.scripting.registerContentScripts` による動的登録で実装される。既存タブへの再注入ロジックを静的 `content_scripts` だけを見て書いていると、MAIN world script は既に開いていたタブに反映されない。`chrome.scripting.getRegisteredContentScripts()` も合わせて再注入対象にする
+- MAIN world と isolated world をまたぐ情報伝達は、JS の直接共有ではなく DOM 属性（`data-*`）や CustomEvent など「シリアライズされた DOM 経由」で行う。isolated world 側は書き込まれた属性を読むだけにし、ページ内部構造への依存はすべて MAIN world 側に閉じ込める
+- Figma の一覧は仮想化されており DOM ノードが使い回されるため、MAIN world 側で書き込む解決済み属性は `data-index` などの識別子が変化したら必ず再計算し、古いカードの値を持ち越さないようにする
