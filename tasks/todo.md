@@ -205,3 +205,27 @@
 - `docs/project/github-issues-v0.1.md` の起票計画数 19 件と GitHub 上の Issue 数は一致していた
 - `docs/project/github-issues-v0.1.md` の `開発順序` は `001 → 002 → 003 ...` なので、次に着手すべき Issue は `#4 [M1][scan] Drafts画面判定処理を実装する` だった
 - `#14 [M1][ui] 初回案内を実装する` も M1 ラベル相当だが、開始順序の基準はマイルストーン名ではなく docs に明記された連番順とする
+
+## Issue 003 の PR を作成する
+
+### 仕様
+
+- `feature/issue-003-detect-drafts-page` から `develop` 向けの PR を作成する
+- PR 本文の先頭に `Closes #4` を入れて GitHub Issue と紐づける
+- 未コミットの `.serena/project.yml` と `tasks/todo.md` も今回の PR に含める
+- 既存 PR の重複がないことを確認してから draft PR を作成する
+
+### 実施計画
+
+- [x] 現在のブランチ、対応 Issue、既存 PR の有無を確認する
+- [x] PR タイトルと本文を整えて draft PR を作成する
+- [x] 作成結果を確認してレビューを追記する
+
+### レビュー
+
+- `feature/issue-003-detect-drafts-page` が `origin/feature/issue-003-detect-drafts-page` に push 済みで、`develop` に対する差分が `implement drafts page detection` の 1 コミットであることを確認した
+- `gh issue list -R taiga-tech/figma-explorer --state all --limit 100 --json number,title` で Issue 003 の対応 GitHub Issue が `#4 [M1][scan] Drafts画面判定処理を実装する` だと確認した
+- `gh pr list --head feature/issue-003-detect-drafts-page --json number,title,state,isDraft,url` では既存 PR は 0 件だった
+- `gh pr create --draft --base develop --head feature/issue-003-detect-drafts-page` で draft PR `#22` を作成した
+- PR URL は `https://github.com/taiga-tech/figma-explorer/pull/22`、本文先頭には `Closes #4` を入れて Issue と紐づけた
+- ユーザー指示に合わせて、PR 作成後に未コミットだった `.serena/project.yml` と `tasks/todo.md` も追加で含める
