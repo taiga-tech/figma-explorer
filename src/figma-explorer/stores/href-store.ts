@@ -2,14 +2,18 @@ import { detectDraftsPage } from "../../features/scan/detect-drafts-page"
 import { applyPageInset } from "../utils/apply-page-inset"
 
 const hrefListeners = new Set<() => void>()
+const navigationWithEvents = window as Window & {
+  navigation?: EventTarget
+}
 
 let currentHref = window.location.href
 let locationMonitorStarted = false
+let hrefSyncScheduled = false
 
-const syncHrefState = () => {
+const syncHrefState = (force = false) => {
   const nextHref = window.location.href
 
-  if (currentHref === nextHref) {
+  if (!force && currentHref === nextHref) {
     return
   }
 
@@ -21,6 +25,19 @@ const syncHrefState = () => {
   })
 }
 
+const scheduleHrefSync = () => {
+  if (hrefSyncScheduled) {
+    return
+  }
+
+  hrefSyncScheduled = true
+
+  requestAnimationFrame(() => {
+    hrefSyncScheduled = false
+    syncHrefState()
+  })
+}
+
 const startLocationMonitor = () => {
   if (locationMonitorStarted) {
     return
@@ -29,7 +46,7 @@ const startLocationMonitor = () => {
   locationMonitorStarted = true
 
   const notifyHrefChange = () => {
-    queueMicrotask(syncHrefState)
+    scheduleHrefSync()
   }
 
   const originalPushState = window.history.pushState.bind(window.history)
@@ -49,12 +66,31 @@ const startLocationMonitor = () => {
 
   window.addEventListener("popstate", notifyHrefChange)
   window.addEventListener("hashchange", notifyHrefChange)
+  window.addEventListener("focus", notifyHrefChange)
+  document.addEventListener("visibilitychange", notifyHrefChange)
+
+  navigationWithEvents.navigation?.addEventListener(
+    "currententrychange",
+    notifyHrefChange
+  )
+  navigationWithEvents.navigation?.addEventListener(
+    "navigate",
+    notifyHrefChange
+  )
+
+  const routeMutationObserver = new MutationObserver(notifyHrefChange)
+  routeMutationObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  })
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", syncHrefState, { once: true })
-  } else {
-    applyPageInset(detectDraftsPage(currentHref))
+    document.addEventListener("DOMContentLoaded", () => syncHrefState(true), {
+      once: true
+    })
   }
+
+  syncHrefState(true)
 }
 
 export const subscribeToHref = (listener: () => void) => {

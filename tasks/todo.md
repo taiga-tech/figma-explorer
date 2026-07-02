@@ -249,3 +249,27 @@
 - `actionlint .github/workflows/submit.yml` で `actions/checkout@v3` と `actions/cache@v3` が古い runner を要求すると指摘された
 - `.github/workflows/submit.yml` の該当 2 箇所を `@v4` へ更新し、workflow の処理順や artifact 設定は変えなかった
 - 修正後に `actionlint .github/workflows/submit.yml` を再実行し、エラーが 0 件になった
+
+## Figma Drafts パネルの再注入と遷移追従を修正する
+
+### 仕様
+
+- 拡張機能を再読み込みした直後でも、既に開いている `https://www.figma.com/*` タブへ整理パネルを再注入できるようにする
+- Figma の SPA 遷移で Drafts 画面から別画面へ移動したとき、整理パネルとページ右余白をすぐに外す
+- 既存の Drafts 判定ロジックは流用し、表示条件そのものは変えない
+- 権限追加は必要最小限に留める
+
+### 実施計画
+
+- [x] 既存タブ再注入の経路を追加する
+- [x] URL 監視を強化して非 Drafts 遷移時の追従漏れを解消する
+- [x] `pnpm build` でビルド確認し、レビューと教訓を追記する
+
+### レビュー
+
+- `src/background.ts` を追加し、拡張機能の再読み込み時に manifest の `content_scripts` 設定を使って、既に開いている `https://www.figma.com/*` タブへ再注入するようにした
+- `package.json` の manifest に `scripting` 権限だけを追加し、既存タブへの再注入に必要な権限を最小限で付与した
+- `src/figma-explorer/stores/href-store.ts` で初期同期を強制実行するようにし、`DOMContentLoaded` 時に `href` が変わっていなくても表示状態と右余白が同期されるようにした
+- 同じ `href-store` で `history` patch に加えて `window.navigation`、`visibilitychange`、`focus`、DOM mutation を監視し、Figma の SPA 遷移でも Drafts 離脱時にパネルが消えるよう補強した
+- `pnpm format` と `pnpm build` を実行し、`build/chrome-mv3-prod/manifest.json` に `background.service_worker`、`permissions: ["scripting"]`、既存 content script 定義が出力されることを確認した
+- `react-doctor` は `npx -y react-doctor@latest . --verbose --diff` を試したが、この環境では応答が返らず中断した

@@ -20,3 +20,5 @@
 - docs に `開発順序` がある場合、次に着手する Issue はマイルストーン名だけで判断せず、その連番順を最優先で確認する
 - PR 対象外として扱った未コミット差分でも、ユーザーが「含めてください」と言ったら即座にスコープを更新して同じ PR に追加する
 - GitHub Actions workflow を触ったら `actionlint` を回し、`uses:` の major が古くて runner 非対応になっていないか確認する
+- MV3 の静的 content script は拡張機能の再読み込み時に既存タブへ自動再注入されないので、開きっぱなしの対象タブも即反映したいときは background から manifest の `content_scripts` を再実行する
+- URL 監視ストアで初期同期を `DOMContentLoaded` に委ねる場合は、`href` が同じでも強制同期できる経路を残す。差分更新だけにすると初回の表示状態や余白適用が抜ける
