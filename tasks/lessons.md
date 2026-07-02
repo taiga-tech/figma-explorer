@@ -22,3 +22,4 @@
 - GitHub Actions workflow を触ったら `actionlint` を回し、`uses:` の major が古くて runner 非対応になっていないか確認する
 - MV3 の静的 content script は拡張機能の再読み込み時に既存タブへ自動再注入されないので、開きっぱなしの対象タブも即反映したいときは background から manifest の `content_scripts` を再実行する
 - URL 監視ストアで初期同期を `DOMContentLoaded` に委ねる場合は、`href` が同じでも強制同期できる経路を残す。差分更新だけにすると初回の表示状態や余白適用が抜ける
+- scan 系の実装を始めるときは、DOM 抽出より先に `src/features/scan/` 配下へ共通型を置いて、取得メタ情報と将来扱わない情報の境界を先に固定する
