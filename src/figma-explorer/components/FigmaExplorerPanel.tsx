@@ -1,11 +1,14 @@
 import { FIGMA_MATCHES } from "../constants/figma-routes"
 import { formatHrefPathname } from "../formatters/format-href-pathname"
+import { useFileCardDetection } from "../hooks/use-file-card-detection"
 
 type FigmaExplorerPanelProps = {
   href: string
 }
 
 export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
+  const fileCardDetectionResult = useFileCardDetection()
+
   return (
     <div className="figma-explorer-shell">
       <aside
@@ -38,14 +41,25 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
               <dt>Route</dt>
               <dd>{formatHrefPathname(href)}</dd>
             </div>
+            <div>
+              <dt>Scan</dt>
+              <dd>
+                {fileCardDetectionResult.status === "success" &&
+                  `${fileCardDetectionResult.elements.length} candidate cards`}
+                {fileCardDetectionResult.status === "empty" &&
+                  "0 candidate cards"}
+                {fileCardDetectionResult.status === "error" &&
+                  fileCardDetectionResult.message}
+              </dd>
+            </div>
           </dl>
         </section>
 
         <section className="figma-explorer-panel__section">
           <h2 className="figma-explorer-panel__section-title">Next steps</h2>
           <ul className="figma-explorer-panel__list">
-            <li>DraftFile と scan 系の基本型を定義する</li>
-            <li>ファイルカード候補 DOM の検出を追加する</li>
+            <li>ファイル名と URL の抽出を追加する</li>
+            <li>FileId 生成処理を追加する</li>
             <li>OrganizerPanel の本体 UI へ置き換える</li>
           </ul>
         </section>

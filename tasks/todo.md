@@ -323,3 +323,29 @@
 - `git flow feature publish issue-004-draft-file-types` で `origin/feature/issue-004-draft-file-types` を作成した
 - `gh pr create --draft --base develop --head feature/issue-004-draft-file-types` で draft PR `#23` を作成した
 - PR URL は `https://github.com/taiga-tech/figma-explorer/pull/23`、本文先頭には `Closes #9` を入れて Issue と紐づけた
+
+## Issue 005: ファイルカード候補DOMを検出する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 005 を実装対象とする
+- `src/features/scan/detect-file-card-elements.ts` を追加し、取得対象セレクタを `features/scan` に閉じ込める
+- Drafts 画面のカード一覧 root を取得できない場合は `error`、取得できても候補が 0 件なら `empty`、候補があれば `success` を返す
+- 既存の仮パネルから検出結果を確認できるようにし、後続 Issue のパース処理へ渡しやすい形にする
+
+### 実施計画
+
+- [x] Issue 005 の受け入れ条件と既存 scan 構成を確認する
+- [x] `git flow feature start issue-005-detect-file-card-elements` でブランチを作成する
+- [x] `detect-file-card-elements.ts` を実装し、仮パネルから結果を表示する
+- [x] `pnpm build` で検証し、レビューと教訓を追記する
+
+### レビュー
+
+- `feature/issue-005-detect-file-card-elements` を `git flow feature start` で作成した
+- `src/features/scan/detect-file-card-elements.ts` を追加し、Drafts 画面の surface root と一覧 root の取得、`[role='listitem'][data-index]` ベースの候補検出、重複除去を `scan` 機能配下へ閉じ込めた
+- 戻り値は `success | empty | error` の union にし、カード一覧 root を取得できない場合だけ `error`、一覧 root は取れたが候補 0 件なら `empty` を返すようにして DOM 取得失敗と 0 件を区別した
+- ユーザー提供の Figma DOM に合わせて、候補検出はリンク前提を捨てて `role=list` 配下の `role=listitem` を対象にする形へ修正し、後続 Issue でカード内部の `role=group`、`data-card-main-action`、名前・更新日時を辿れる要素配列にした
+- `src/figma-explorer/components/FigmaExplorerPanel.tsx` から検出結果を表示するようにし、仮パネル上で候補件数または error 内容を確認できるようにした
+- 初回描画時に Drafts DOM がまだ揃っていないと stale な error 表示が残るため、`src/figma-explorer/stores/file-card-detection-store.ts` と `useSyncExternalStore` ベースの hook を追加し、DOM mutation 後に検出結果が再評価されるよう修正した
+- `pnpm format` と `pnpm build` を実行し、Prettier 整形と `plasmo build` の成功を確認した
