@@ -373,3 +373,50 @@
 - `git flow feature publish issue-005-detect-file-card-elements` で `origin/feature/issue-005-detect-file-card-elements` を作成した
 - `gh pr create --draft --base develop --head feature/issue-005-detect-file-card-elements` で draft PR `#24` を作成した
 - PR URL は `https://github.com/taiga-tech/figma-explorer/pull/24`、本文先頭には `Closes #2` を入れて Issue と紐づけた
+
+## Issue 006: ファイル名とURLを抽出する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 006 を実装対象とする
+- `src/features/scan/` 配下でファイルカード候補 DOM からファイル名と URL を抽出する
+- 1 件のパース失敗で全体を止めず、失敗したカードだけをスキップできるようにする
+- 抽出結果と失敗件数を仮パネルから確認できるようにし、後続 Issue の ID 生成処理へ渡しやすい形にする
+
+### 実施計画
+
+- [x] Issue 006 の受け入れ条件と既存 scan 構成を確認する
+- [x] `git flow feature start issue-006-extract-file-name-url` でブランチを作成する
+- [x] ファイル名と URL の抽出処理を実装し、仮パネルへ接続する
+- [x] `pnpm build` で検証し、レビューと教訓を追記する
+
+### レビュー
+
+- `feature/issue-006-extract-file-name-url` を `git flow feature start` で作成した
+- `src/features/scan/extract-file-card-metadata.ts` を追加し、候補カード DOM からファイル名と URL を抽出する処理を `scan` 機能配下へ閉じ込めた
+- `aria-label`、`title`、`data-tooltip`、`innerText` を段階的に見て名前候補を組み立て、更新日時らしい文字列や URL 自体は除外するようにした
+- URL や名前を取れなかったカードは全体失敗にせず `skippedCount` として集計し、1 件のパース失敗で一覧全体が止まらない形にした
+- `src/figma-explorer/components/FigmaExplorerPanel.tsx` を更新し、抽出件数・スキップ件数・検出済みファイル一覧を仮パネル上で確認できるようにした
+- `pnpm format` と `pnpm build` を実行し、Prettier 整形と `plasmo build` の成功を確認した
+- `npx -y react-doctor@latest . --verbose --diff` を実行し、diff スキャンでは `No issues found!` を確認した
+- 候補カード検出後も `名前または URL を抽出できませんでした` になったため、抽出対象の self 要素にも `data-card-main-action` や `href` が付くケースを拾えるように修正した
+- ユーザー共有の Figma Drafts HTML を確認し、`button[data-card-main-action]` に `href` が出ないカードでは React 内部 props/fiber から `/file/...` などのルート断片を探すフォールバックを追加した
+- 実機検証で `0 files extracted / 25 skipped` のまま失敗したため、ユーザー共有の Figma Drafts 生 DOM を再確認したところ、カード内に `a` 要素・`href`/`data-href`/`data-url` 系属性が一切存在しないことを確認した
+- React fiber 探索が `link`（null）と外側の `listitem` 要素にしか行われておらず、実際のクリック領域である `actionRoot`（`button[data-card-main-action]`）自体の fiber を一度もスキャンしていなかったため、`resolveFileCardUrl` に `actionRoot` のスキャンを追加した
+- fiber 探索の深度 4・ノード予算 250 では、ルート文字列を保持するラッパーコンポーネントまで届かない可能性があったため、深度 6・ノード予算 600・1 ノードあたりの走査件数 40 へ拡大した
+- ルート文字列がラッパーコンポーネント側の props/state にある場合に対応するため、`return` ポインタ経由で祖先 fiber を最大 3 ホップまで辿って探索対象に加えた（`child`/`sibling`/`alternate` は他カードのデータ混入を避けるため引き続き除外）
+- 一覧に出ていた `Sites` ファイルのアイコン種別に合わせて `FIGMA_ROUTE_FRAGMENT_PATTERN` へ `design` と `site` のルートセグメントを追加した
+- `pnpm build` と `pnpm format` を実行し、ビルド成功と整形済みを確認した。Figma の React 内部構造への依存は本質的に脆いため、実機での再スキャン結果次第でさらなる調整が必要
+- 実機でも `0 files extracted` のまま変化がなかったため、ユーザーに DevTools Console 上で fiber 祖先チェーンとルート文字列マッチを可視化する診断スクリプトを実行してもらった
+- 診断結果から、実際のファイル URL は `button[data-card-main-action]` から祖先方向へ **11 ホップ** 上った fiber の `memoizedProps.tile.file.editUrl`（および `handoffUrl`）に存在することが判明した。直前の修正で追加した祖先探索は上限 3 ホップに抑えていたため、実データまで全く届いていなかった
+- `MAX_FIBER_ANCESTOR_HOPS` を 3 → 16（安全マージン込み）、`MAX_ROUTE_SCAN_NODES` を 600 → 3000 に引き上げ、既存の正規表現ベースの探索がこの深さでも `editUrl`/`handoffUrl` にヒットできるようにした
+- `pnpm build` を再実行し、ビルド成功を確認した。次は実機での再スキャンでファイル名・URL が正しく抽出されるかの確認待ち
+- 実機で再度変化がなかったため、ユーザーに DevTools Console（main world で実行される）上で fiber 祖先チェーンを可視化する診断スクリプトを実行してもらった
+- 診断結果から `button[data-card-main-action]` の 11 ホップ祖先の `memoizedProps.tile.file.editUrl` に実 URL が存在すると判明したが、ホップ上限を 16 へ広げても実機では改善しなかった
+- 根本原因は「Chrome 拡張の content script は既定で isolated world で動くため、ページ本体（React）が DOM ノードへ付与した `__reactFiber$` / `__reactProps$` の expando プロパティ自体が見えない」ことだった。DevTools Console は既定で main world 実行のため、そこでは見えていただけで、ホップ数やノード予算をいくら調整しても isolated world からは原理的に届かない
+- `src/features/scan/resolve-file-card-route-from-fiber.ts` に fiber 探索ロジックを切り出し、`src/features/scan/annotate-file-card-routes.ts` で候補カードへ解決済み URL を `data-figma-explorer-resolved-url` 属性として書き込む構成にした
+- 新しい `src/contents/figma-file-route-bridge.ts` を `world: "MAIN"` の Plasmo content script として追加し、実際の fiber 探索は必ずページ本体と同じ JS world から実行されるようにした
+- 仮想化された一覧で DOM ノードが使い回されても誤った URL を残さないよう、`annotate-file-card-routes.ts` は `data-index` が前回解決時と変わったら必ず再解決するキャッシュ判定を入れた
+- `src/features/scan/extract-file-card-metadata.ts` から isolated world では原理的に成功しない fiber 探索コードを削除し、`data-figma-explorer-resolved-url` 属性を読むだけのシンプルな実装に置き換えた
+- Plasmo は `world: "MAIN"` の content script を `manifest.json` の静的 `content_scripts` ではなく `chrome.scripting.registerContentScripts` による動的登録で実装しており、既存の `src/background.ts` の再注入ロジックは静的 `content_scripts` しか見ていなかったため、既に開いていたタブには新しい bridge script が注入されない不備があった。`chrome.scripting.getRegisteredContentScripts()` を使った再注入処理を追加して解消した
+- `pnpm build` と `pnpm format` を実行し、ビルド成功と整形済みを確認した。次はユーザーに拡張機能の完全リロードと Figma タブの**フルリロード**（SPA 内遷移ではなく実ページ再読み込み）をしてもらい、再スキャン結果を確認してもらう
