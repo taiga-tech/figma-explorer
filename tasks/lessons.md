@@ -23,3 +23,6 @@
 - MV3 の静的 content script は拡張機能の再読み込み時に既存タブへ自動再注入されないので、開きっぱなしの対象タブも即反映したいときは background から manifest の `content_scripts` を再実行する
 - URL 監視ストアで初期同期を `DOMContentLoaded` に委ねる場合は、`href` が同じでも強制同期できる経路を残す。差分更新だけにすると初回の表示状態や余白適用が抜ける
 - scan 系の実装を始めるときは、DOM 抽出より先に `src/features/scan/` 配下へ共通型を置いて、取得メタ情報と将来扱わない情報の境界を先に固定する
+- DOM スキャンで 0 件と取得失敗を区別したいときは、候補要素の件数だけで判定せず、まず Drafts surface root を解決できたかどうかを status の分岐点にする
+- Figma Drafts のカードは `a` 要素とは限らない。まず `role=list` と `role=listitem[data-index]` の一覧構造を優先して拾い、`role=group` や `data-card-main-action` は後続の抽出で辿る
+- Figma の一覧 DOM は初回描画後に遅れて組み上がることがある。render 時の単発検出で止めず、DOM mutation を購読する外部ストア経由で再評価できる形にする
