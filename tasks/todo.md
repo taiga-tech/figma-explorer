@@ -229,3 +229,23 @@
 - `gh pr create --draft --base develop --head feature/issue-003-detect-drafts-page` で draft PR `#22` を作成した
 - PR URL は `https://github.com/taiga-tech/figma-explorer/pull/22`、本文先頭には `Closes #4` を入れて Issue と紐づけた
 - ユーザー指示に合わせて、PR 作成後に未コミットだった `.serena/project.yml` と `tasks/todo.md` も追加で含める
+
+## actionlint を修正する
+
+### 仕様
+
+- `.github/workflows/submit.yml` の `actionlint` エラーを解消する
+- 古い runner を要求する GitHub Action を、現行の GitHub Actions runner で動く版へ更新する
+- 既存の submit workflow の処理順や目的は変えない
+
+### 実施計画
+
+- [x] `actionlint` を実行して失敗箇所を特定する
+- [x] 対象 workflow を最小変更で修正する
+- [x] `actionlint` を再実行して解消を確認し、レビューを追記する
+
+### レビュー
+
+- `actionlint .github/workflows/submit.yml` で `actions/checkout@v3` と `actions/cache@v3` が古い runner を要求すると指摘された
+- `.github/workflows/submit.yml` の該当 2 箇所を `@v4` へ更新し、workflow の処理順や artifact 設定は変えなかった
+- 修正後に `actionlint .github/workflows/submit.yml` を再実行し、エラーが 0 件になった
