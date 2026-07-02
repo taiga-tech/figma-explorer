@@ -273,3 +273,29 @@
 - 同じ `href-store` で `history` patch に加えて `window.navigation`、`visibilitychange`、`focus`、DOM mutation を監視し、Figma の SPA 遷移でも Drafts 離脱時にパネルが消えるよう補強した
 - `pnpm format` と `pnpm build` を実行し、`build/chrome-mv3-prod/manifest.json` に `background.service_worker`、`permissions: ["scripting"]`、既存 content script 定義が出力されることを確認した
 - `react-doctor` は `npx -y react-doctor@latest . --verbose --diff` を試したが、この環境では応答が返らず中断した
+
+## Issue 004: DraftFile型を定義する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 004 を実装対象とする
+- `src/features/scan/` 配下に `DraftFile`、`FigmaFileType`、`FileScanStatus` を定義する
+- Figma ファイル本文の内容は含めず、Drafts 一覧から取得できるメタ情報だけを持つ
+- 後続 Issue の DOM スキャン処理から import しやすい、責務が明確な型定義にする
+
+### 実施計画
+
+- [x] Issue 004 の受け入れ条件と既存データモデルを確認する
+- [x] `git flow feature start issue-004-draft-file-types` でブランチを作成する
+- [x] `DraftFile`、`FigmaFileType`、`FileScanStatus` を実装する
+- [x] 既存 UI 文言や関連 import を必要最小限で更新する
+- [x] `pnpm build` で検証し、レビューと教訓を追記する
+
+### レビュー
+
+- `feature/issue-004-draft-file-types` を `git flow feature start` で作成した
+- `src/features/scan/draft-file.ts` を追加し、`DraftFile`、`FigmaFileType`、`FileScanStatus` を `scan` 機能配下へ集約した
+- `DraftFile` には `id`、`name`、`url`、`type`、`updatedAtText`、`thumbnailUrl`、`firstSeenAt`、`lastSeenAt`、`scanStatus` を持たせ、Figma ファイル本文は含めない形に揃えた
+- `FigmaFileType` は `design | figjam | slides | unknown`、`FileScanStatus` は `active | parse_error` として、後続の DOM 解析や失敗件数管理へ繋げやすい最小集合にした
+- `src/figma-explorer/components/FigmaExplorerPanel.tsx` の Next steps を現状の進捗に合わせて更新した
+- `pnpm build` を実行し、`plasmo build` の成功を確認した

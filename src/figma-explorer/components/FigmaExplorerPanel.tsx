@@ -44,7 +44,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
         <section className="figma-explorer-panel__section">
           <h2 className="figma-explorer-panel__section-title">Next steps</h2>
           <ul className="figma-explorer-panel__list">
-            <li>Drafts 画面判定を専用ロジックへ切り出す</li>
+            <li>DraftFile と scan 系の基本型を定義する</li>
             <li>ファイルカード候補 DOM の検出を追加する</li>
             <li>OrganizerPanel の本体 UI へ置き換える</li>
           </ul>
