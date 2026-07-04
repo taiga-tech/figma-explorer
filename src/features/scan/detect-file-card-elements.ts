@@ -1,3 +1,5 @@
+import { createOrganizerError, type OrganizerError } from "../../utils/result"
+
 const DRAFTS_SURFACE_ROOT_SELECTORS = ["[role='main']", "main"] as const
 
 const FILE_CARD_LIST_ROOT_SELECTORS = ["[role='list']"] as const
@@ -19,6 +21,10 @@ export type DetectFileCardElementsResult =
       reason: "file_card_list_not_found"
       message: string
     }
+
+export const toOrganizerScanError = (
+  result: Extract<DetectFileCardElementsResult, { status: "error" }>
+): OrganizerError => createOrganizerError("scan_dom_missing", result.message)
 
 const getDraftsSurfaceRoot = (root: ParentNode) => {
   for (const selector of DRAFTS_SURFACE_ROOT_SELECTORS) {

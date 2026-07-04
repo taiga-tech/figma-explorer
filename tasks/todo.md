@@ -505,3 +505,143 @@
 - README.md に表記ルール（実装/予定ラベル、型定義の正本ファイル表、用語統一）を新設した
 - 検証: pnpm format 済み、内部リンク切れ 0 件、docs 中の src パス参照は「予定」2件を除き実在、
   セレクタ台帳と src/features/scan の定数が一致、変更ファイルは docs/ と tasks/ のみ
+
+### 基盤フェーズを実装する（Issue 020 → 021 → 007 → 022 → 010 → 011）
+
+#### 仕様
+
+- docs の開発順序に従い、基盤（テスト・Result・FileId・migration）から実装する
+- 各 Issue ごとにコミットを分け、`pnpm test` と `pnpm build` を通す
+- GitHub Issue 対応: 020=#26, 021=#30, 007=#8, 022=#27, 010=#7, 011=#11
+
+#### 実施計画
+
+- [x] Issue 020: Vitest + jsdom 導入、既存純関数の unit テスト、fixtures 雛形
+- [x] Issue 021: `src/utils/result.ts`（Result / OrganizerError）+ テスト
+- [x] Issue 007: `create-file-id.ts`（file key 抽出・正規化・hash fallback）+ テスト
+- [x] Issue 010: `src/domain/` の状態型（SCHEMA_VERSION 含む）
+- [x] Issue 022: migration 基盤（3分岐）+ テスト
+- [x] Issue 011: Plasmo Storage Repository（loadOrMigrate / save / clear）
+- [x] 検証: pnpm test / pnpm build / pnpm format
+- [x] Issue 008: スキャン失敗と0件の区別（scan_dom_missing 分類、再スキャンボタン、エラーバナー）
+
+#### レビュー
+
+- ブランチ feature/v0.1-foundation に Issue ごとの7コミットを積んだ（テスト基盤 → Result 型 → FileId → 状態型 → migration → Storage → スキャンエラー区別）
+- Issue 020（#26）: Vitest + jsdom を導入し `pnpm test` を追加。jsdom は innerText 未実装のため vitest.setup.ts で textContent ベースの polyfill を適用し、testing-strategy.md に既知の制約として追記した。README / AGENTS.md（CLAUDE.md の実体）のコマンド一覧も更新
+- Issue 021（#30）: src/utils/result.ts に Result / ok / err / OrganizerError（kind 7種）を実装
+- Issue 007（#8）: create-file-id.ts。file key 第一候補（8ルート対応）、タイトルスラッグ・クエリ不変の正規化、FNV-1a hash fallback、missing_url / unsupported_url の Result 形式
+- Issue 010（#7）: src/domain/ に folder.ts と organizer-state.ts（SCHEMA_VERSION=1、PersistentState、RuntimeState、createInitialPersistentState）
+- Issue 022（#27）: migrate-persistent-state.ts。ready / future_version / corrupted の3分岐を純関数で実装し、形状検証も実施
+- Issue 011（#11）: organizer-storage.ts。backend 注入でテスト可能にし、loadOrMigrate（破損時はバックアップキーへ退避→初期化）、直列化された save、バックアップを残す clear を実装
+- Issue 008（#10）: 検出エラーを scan_dom_missing へ分類する toOrganizerScanError、ストアの rescanFileCards、パネルのエラーバナー + 再スキャンボタンを実装
+- 検証: pnpm test 45件パス、pnpm build 成功、pnpm format 済み
+- 未実施: Issue 008 の UI 変更は実 Figma での smoke test が未実施（拡張再読み込み + 再スキャンボタンの動作確認が必要）。push / PR 作成は未実施
+
+### 基盤フェーズの PR を作成する
+
+#### 実施計画
+
+- [x] feature/v0.1-foundation を origin へ publish する
+- [x] gh で draft PR を作成する
+
+#### レビュー
+
+- `git push -u origin feature/v0.1-foundation` でブランチを publish した
+- draft PR #31 を develop 向けに作成した（https://github.com/taiga-tech/figma-explorer/pull/31）
+- 本文先頭に Closes #26 / #30 / #8 / #7 / #27 / #11 / #10 を記載し、7 Issue と紐づけた
+- 検証チェックリストに「実 Figma での smoke test 未実施（#10 の UI）」をマージ前の要確認事項として明記した
+
+### CI を作成する
+
+#### 仕様
+
+- GitHub Actions で pull request / push 時に `lint` `test` `build` を自動検証する
+- `lint` は整形違反を検知するチェック専用コマンドとして定義し、既存の `format` は書き込み用途のまま残す
+- Node / pnpm のセットアップは現在の repo に合わせて固定し、依存解決をキャッシュする
+- 既存の workflow と衝突せず、CI 用 workflow は失敗箇所が分かりやすい job 名にする
+
+#### 実施計画
+
+- [x] 既存の package scripts と workflow 構成を確認する
+- [x] `package.json` に CI 用の `lint` script を追加する
+- [x] `.github/workflows/ci.yml` を追加して `lint` `test` `build` を実行する
+- [x] workflow の構文とローカルの `pnpm lint` `pnpm test` `pnpm build` を確認する
+- [x] レビューと教訓を追記する
+
+#### レビュー
+
+- `package.json` に `pnpm lint` を追加し、Prettier の check mode を CI 用の整形検証コマンドとして分離した
+- `.github/workflows/ci.yml` を追加し、`push` / `pull_request` ごとに `lint` `test` `build` を matrix job で独立実行するようにした
+- 依存セットアップは `pnpm/action-setup@v4` + `actions/setup-node@v4` + `pnpm install --frozen-lockfile` に統一した
+- 既存の `.github/workflows/submit.yml` も同じ pnpm / Node 20 構成へ更新し、Node 16 と旧 action major 依存を解消した
+- `AGENTS.md` `CLAUDE.md` `README.md` のコマンド案内を `lint` 追加後の実態に合わせて更新した
+- 検証: `pnpm lint` 成功、`pnpm test` 45件成功、`pnpm build` 成功、`actionlint .github/workflows/*.yml` 成功
+
+### ESLint を導入する
+
+#### 仕様
+
+- TypeScript / React / Vitest を含む現行 repo に ESLint を導入する
+- `lint` は ESLint を中心に実行し、既存の Prettier 整形チェックも維持して CI からまとめて検証できるようにする
+- browser / service worker / node / vitest の実行環境差分を config 側で吸収する
+- 既存 CI とドキュメントのコマンド案内を ESLint 導入後の実態へ更新する
+
+#### 実施計画
+
+- [x] 現状の lint 運用と対象ファイルを確認する
+- [x] ESLint 依存と `eslint.config.*` を追加する
+- [x] `package.json` / CI / 案内文を ESLint 前提に更新する
+- [x] `pnpm lint` `pnpm test` `pnpm build` `actionlint` を実行して確認する
+- [x] レビューと教訓を追記する
+
+#### レビュー
+
+- `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals`, `eslint-config-prettier` を devDependencies に追加した
+- `eslint.config.mjs` を新設し、TypeScript 推奨ルール、React Hooks ルール、browser/service worker/webextensions globals、Node/Vitest 用 override を設定した
+- `pnpm lint` は `pnpm lint:eslint && pnpm lint:format` に変更し、ESLint と Prettier の check をまとめて CI から実行できるようにした
+- Plasmo の content script entry は `config` / `getStyle` の export が必要なため、`src/contents/**/*.tsx` では `react-refresh/only-export-components` を無効化して誤検知を避けた
+- `AGENTS.md` `CLAUDE.md` `README.md` の `pnpm lint` 説明を ESLint 導入後の実態へ更新した
+- 検証: `pnpm lint` 成功、`pnpm test` 45件成功、`pnpm build` 成功、`actionlint .github/workflows/*.yml` 成功
+
+### Detected files 一覧をスクロール可能にする
+
+#### 仕様
+
+- `figma-explorer-panel__detected-files` が縦に溢れたとき、パネル全体ではなく一覧領域だけがスクロールする
+- 既存の header / summary / next steps は固定されたままにし、余剰高さは Detected files セクションへ割り当てる
+- 既存の未コミット CSS 差分を壊さず、必要最小限の構造変更で解決する
+
+#### 実施計画
+
+- [x] `FigmaExplorerPanel` と `figma-explorer.css` の該当レイアウトを確認する
+- [x] Detected files セクションだけが伸縮するように class と CSS を調整する
+- [x] `pnpm lint` と `pnpm build` で確認し、レビューと教訓を追記する
+
+#### レビュー
+
+- `src/figma-explorer/components/FigmaExplorerPanel.tsx` の Detected files セクションに専用 class を追加し、伸縮先を一覧セクションへ限定した
+- `src/figma-explorer/styles/figma-explorer.css` では `.figma-explorer-panel__section` 全体を伸ばさず、`.figma-explorer-panel__section--detected-files` のみに `flex: 1` と `min-height: 0` を付与した
+- `.figma-explorer-panel__detected-files` は `flex: 1` と `min-height: 0` を持つスクロール領域に変更し、ヘッダーや他セクションを固定したまま一覧だけが縦スクロールするようにした
+- 検証: `pnpm lint` 成功、`pnpm build` 成功
+
+### CI の Node と pnpm バージョンを更新する
+
+#### 仕様
+
+- GitHub Actions の CI / submit workflow で使う Node を `26` に更新する
+- GitHub Actions の pnpm setup は `10` 系指定へ揃える
+- 既存の action major や install 手順は維持しつつ、バージョン指定だけを今回の要件に合わせる
+
+#### 実施計画
+
+- [x] 現在の workflow 内の Node / pnpm 指定箇所を確認する
+- [x] `ci.yml` と `submit.yml` の version 指定を `node 26` / `pnpm 10` に更新する
+- [x] `actionlint` と差分確認を行い、レビューと教訓を追記する
+
+#### レビュー
+
+- `.github/workflows/ci.yml` の `actions/setup-node` を `node-version: 26` に更新した
+- `.github/workflows/ci.yml` の `pnpm/action-setup` は patch 固定の `10.34.4` から major 指定の `10` に変更した
+- `.github/workflows/submit.yml` も同様に `node-version: 26` と `pnpm version: 10` へ更新し、CI と submit の実行環境を揃えた
+- 検証: `actionlint .github/workflows/*.yml` 成功

@@ -75,6 +75,10 @@ const startFileCardDetectionMonitor = () => {
   syncFileCardDetection(true)
 }
 
+export const rescanFileCards = () => {
+  syncFileCardDetection(true)
+}
+
 export const subscribeToFileCardDetection = (listener: () => void) => {
   startFileCardDetectionMonitor()
   fileCardDetectionListeners.add(listener)
