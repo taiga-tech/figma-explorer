@@ -1,7 +1,9 @@
+import { toOrganizerScanError } from "../../features/scan/detect-file-card-elements"
 import { extractFileCardMetadata } from "../../features/scan/extract-file-card-metadata"
 import { FIGMA_MATCHES } from "../constants/figma-routes"
 import { formatHrefPathname } from "../formatters/format-href-pathname"
 import { useFileCardDetection } from "../hooks/use-file-card-detection"
+import { rescanFileCards } from "../stores/file-card-detection-store"
 
 type FigmaExplorerPanelProps = {
   href: string
@@ -14,12 +16,17 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
       ? extractFileCardMetadata(fileCardDetectionResult.elements, href)
       : null
 
+  const scanError =
+    fileCardDetectionResult.status === "error"
+      ? toOrganizerScanError(fileCardDetectionResult)
+      : null
+
   const scanSummary =
     fileCardDetectionResult.status === "success"
       ? `${extractedFileCards.files.length} files extracted / ${extractedFileCards.skippedCount} skipped`
       : fileCardDetectionResult.status === "empty"
         ? "0 candidate cards"
-        : fileCardDetectionResult.message
+        : scanError?.kind ?? "error"
 
   return (
     <div className="figma-explorer-shell">
@@ -31,8 +38,31 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
             <p className="figma-explorer-panel__eyebrow">Figma Explorer</p>
             <h1 className="figma-explorer-panel__title">Organizer Panel</h1>
           </div>
-          <span className="figma-explorer-panel__badge">Drafts only</span>
+          <div className="figma-explorer-panel__header-actions">
+            <button
+              className="figma-explorer-panel__rescan-button"
+              onClick={rescanFileCards}
+              type="button">
+              再スキャン
+            </button>
+            <span className="figma-explorer-panel__badge">Drafts only</span>
+          </div>
         </header>
+
+        {scanError && (
+          <div className="figma-explorer-panel__error-banner" role="alert">
+            <p className="figma-explorer-panel__error-message">
+              ファイル一覧を読み取れません。Figma
+              の画面構造が変わった可能性があります。
+            </p>
+            <button
+              className="figma-explorer-panel__rescan-button"
+              onClick={rescanFileCards}
+              type="button">
+              再スキャン
+            </button>
+          </div>
+        )}
 
         <section className="figma-explorer-panel__section">
           <p className="figma-explorer-panel__lead">
@@ -95,7 +125,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
           )}
           {fileCardDetectionResult.status === "error" && (
             <p className="figma-explorer-panel__empty-state">
-              {fileCardDetectionResult.message}
+              検出エラー（{scanError?.kind}）: {fileCardDetectionResult.message}
             </p>
           )}
         </section>
