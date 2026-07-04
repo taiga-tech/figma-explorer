@@ -603,3 +603,24 @@
 - Plasmo の content script entry は `config` / `getStyle` の export が必要なため、`src/contents/**/*.tsx` では `react-refresh/only-export-components` を無効化して誤検知を避けた
 - `AGENTS.md` `CLAUDE.md` `README.md` の `pnpm lint` 説明を ESLint 導入後の実態へ更新した
 - 検証: `pnpm lint` 成功、`pnpm test` 45件成功、`pnpm build` 成功、`actionlint .github/workflows/*.yml` 成功
+
+### Detected files 一覧をスクロール可能にする
+
+#### 仕様
+
+- `figma-explorer-panel__detected-files` が縦に溢れたとき、パネル全体ではなく一覧領域だけがスクロールする
+- 既存の header / summary / next steps は固定されたままにし、余剰高さは Detected files セクションへ割り当てる
+- 既存の未コミット CSS 差分を壊さず、必要最小限の構造変更で解決する
+
+#### 実施計画
+
+- [x] `FigmaExplorerPanel` と `figma-explorer.css` の該当レイアウトを確認する
+- [x] Detected files セクションだけが伸縮するように class と CSS を調整する
+- [x] `pnpm lint` と `pnpm build` で確認し、レビューと教訓を追記する
+
+#### レビュー
+
+- `src/figma-explorer/components/FigmaExplorerPanel.tsx` の Detected files セクションに専用 class を追加し、伸縮先を一覧セクションへ限定した
+- `src/figma-explorer/styles/figma-explorer.css` では `.figma-explorer-panel__section` 全体を伸ばさず、`.figma-explorer-panel__section--detected-files` のみに `flex: 1` と `min-height: 0` を付与した
+- `.figma-explorer-panel__detected-files` は `flex: 1` と `min-height: 0` を持つスクロール領域に変更し、ヘッダーや他セクションを固定したまま一覧だけが縦スクロールするようにした
+- 検証: `pnpm lint` 成功、`pnpm build` 成功

@@ -90,7 +90,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
           </dl>
         </section>
 
-        <section className="figma-explorer-panel__section">
+        <section className="figma-explorer-panel__section figma-explorer-panel__section--detected-files">
           <h2 className="figma-explorer-panel__section-title">
             Detected files
           </h2>

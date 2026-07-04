@@ -41,3 +41,4 @@
 - workflow を追加・更新するときは、新しい CI だけでなく既存 workflow の Node / `uses:` major も同時に見直し、セットアップ手順を `pnpm/action-setup` + `actions/setup-node` + `pnpm install --frozen-lockfile` に寄せる
 - ESLint を flat config で導入するときは、browser / service worker / webextensions / node / test の globals を最初から分けておく。拡張機能 repo では `chrome` と Vitest/Node の実行環境が混ざりやすい
 - Plasmo の `src/contents/*.tsx` entry は `config` や `getStyle` を top-level export するため、`react-refresh/only-export-components` の対象から外す。entry 制約に対する誤検知をコード側に押し付けない
+- flex column のパネル内で特定セクションだけをスクロールさせたいときは、スクロール要素自身だけでなく、その親 flex item にも `min-height: 0` を付ける。`overflow: auto` だけでは一覧が縮まず効かない
