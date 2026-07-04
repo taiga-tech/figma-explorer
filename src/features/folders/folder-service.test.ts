@@ -5,10 +5,11 @@ import { createInitialPersistentState } from "../../domain/organizer-state"
 import {
   createFolder,
   deleteFolder,
+  moveFolder,
   renameFolder,
   type CreateFolderInput
 } from "./folder-service"
-import { collectFolderTreeIds } from "./folder-tree-service"
+import { collectFolderTreeIds, findFolderTreeNode } from "./folder-tree-service"
 
 const NOW = "2026-07-05T00:00:00.000Z"
 const LATER = "2026-07-05T01:00:00.000Z"
@@ -46,6 +47,22 @@ const buildStateWithFolders = (): PersistentState => {
     now: NOW,
     createId: () => "folder-research"
   })
+
+  return state
+}
+
+/** level-1 > level-2 > ... > level-5 の一本鎖（最大深さ）を作る。 */
+const buildMaxDepthChainState = (): PersistentState => {
+  let state = createInitialPersistentState(NOW)
+
+  for (let level = 1; level <= 5; level += 1) {
+    state = createFolderOrThrow(state, {
+      name: `level-${level}`,
+      parentId: level === 1 ? null : `folder-level-${level - 1}`,
+      now: NOW,
+      createId: () => `folder-level-${level}`
+    })
+  }
 
   return state
 }
@@ -128,11 +145,227 @@ describe("createFolder", () => {
     })
   })
 
+  it("5階層目までは作成できる", () => {
+    const state = buildMaxDepthChainState()
+
+    expect(state.folders["folder-level-5"]?.parentId).toBe("folder-level-4")
+  })
+
+  it("6階層目の作成はmax_depth_exceededを返す", () => {
+    const result = createFolder(buildMaxDepthChainState(), {
+      name: "level-6",
+      parentId: "folder-level-5"
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "max_depth_exceeded" }
+    })
+  })
+
+  it("既存フォルダとIDが衝突したらduplicate_folder_idを返す", () => {
+    const result = createFolder(buildStateWithFolders(), {
+      name: "design-copy",
+      createId: () => "folder-design"
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "duplicate_folder_id" }
+    })
+  })
+
   it("元のstateを変更しない", () => {
     const state = createInitialPersistentState(NOW)
     const snapshot = structuredClone(state)
 
     createFolder(state, { name: "design" })
+
+    expect(state).toEqual(snapshot)
+  })
+})
+
+describe("moveFolder", () => {
+  it("サブツリーごと別の親へ移動できる", () => {
+    const state = buildStateWithFolders()
+    const result = moveFolder(state, {
+      folderId: "folder-design",
+      parentId: "folder-research",
+      now: LATER
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (result.ok) {
+      expect(result.value.folders["folder-design"]).toMatchObject({
+        parentId: "folder-research",
+        updatedAt: LATER
+      })
+      // 子孫の parentId は変えず、サブツリー構造ごと移動する
+      expect(result.value.folders["folder-design-child"]?.parentId).toBe(
+        "folder-design"
+      )
+
+      const movedNode = findFolderTreeNode(
+        result.value.folderTree,
+        "folder-design"
+      )
+
+      expect(movedNode?.children.map((node) => node.folderId)).toEqual([
+        "folder-design-child"
+      ])
+      expect(collectFolderTreeIds(result.value.folderTree)).toEqual([
+        "folder-research",
+        "folder-design",
+        "folder-design-child"
+      ])
+    }
+  })
+
+  it("ルート直下へ移動できる", () => {
+    const state = buildStateWithFolders()
+    const result = moveFolder(state, {
+      folderId: "folder-design-child",
+      parentId: null,
+      now: LATER
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (result.ok) {
+      expect(result.value.folders["folder-design-child"]?.parentId).toBeNull()
+      expect(result.value.folderTree.map((node) => node.folderId)).toEqual([
+        "folder-design",
+        "folder-research",
+        "folder-design-child"
+      ])
+    }
+  })
+
+  it("移動後もツリー内のフォルダIDは重複しない", () => {
+    const result = moveFolder(buildStateWithFolders(), {
+      folderId: "folder-design",
+      parentId: "folder-research"
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (result.ok) {
+      const ids = collectFolderTreeIds(result.value.folderTree)
+
+      expect(new Set(ids).size).toBe(ids.length)
+    }
+  })
+
+  it("自分自身への移動はcircular_referenceを返す", () => {
+    const result = moveFolder(buildStateWithFolders(), {
+      folderId: "folder-design",
+      parentId: "folder-design"
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "circular_reference" }
+    })
+  })
+
+  it("自分の子孫への移動はcircular_referenceを返す", () => {
+    const result = moveFolder(buildStateWithFolders(), {
+      folderId: "folder-design",
+      parentId: "folder-design-child"
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "circular_reference" }
+    })
+  })
+
+  it("移動後の最深階層が5を超える場合はmax_depth_exceededを返す", () => {
+    // research（高さ1）を level-5 配下（深さ6になる）へは移動できない
+    let state = buildMaxDepthChainState()
+
+    state = createFolderOrThrow(state, {
+      name: "research",
+      now: NOW,
+      createId: () => "folder-research"
+    })
+
+    const result = moveFolder(state, {
+      folderId: "folder-research",
+      parentId: "folder-level-5"
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "max_depth_exceeded" }
+    })
+  })
+
+  it("サブツリーの高さを含めて最大階層を判定する", () => {
+    // 高さ2の design サブツリーは、深さ4の level-4 配下へは移動できない
+    let state = buildMaxDepthChainState()
+
+    state = createFolderOrThrow(state, {
+      name: "design",
+      now: NOW,
+      createId: () => "folder-design"
+    })
+    state = createFolderOrThrow(state, {
+      name: "design-child",
+      parentId: "folder-design",
+      now: NOW,
+      createId: () => "folder-design-child"
+    })
+
+    const rejected = moveFolder(state, {
+      folderId: "folder-design",
+      parentId: "folder-level-4"
+    })
+
+    expect(rejected).toEqual({
+      ok: false,
+      error: { kind: "max_depth_exceeded" }
+    })
+
+    // 深さ3の level-3 配下なら 3 + 2 = 5 階層で収まる
+    const accepted = moveFolder(state, {
+      folderId: "folder-design",
+      parentId: "folder-level-3"
+    })
+
+    expect(accepted.ok).toBe(true)
+  })
+
+  it("存在しないフォルダはfolder_not_foundを返す", () => {
+    const result = moveFolder(buildStateWithFolders(), {
+      folderId: "missing",
+      parentId: null
+    })
+
+    expect(result).toEqual({ ok: false, error: { kind: "folder_not_found" } })
+  })
+
+  it("存在しない親はparent_folder_not_foundを返す", () => {
+    const result = moveFolder(buildStateWithFolders(), {
+      folderId: "folder-design",
+      parentId: "missing"
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "parent_folder_not_found" }
+    })
+  })
+
+  it("元のstateを変更しない", () => {
+    const state = buildStateWithFolders()
+    const snapshot = structuredClone(state)
+
+    moveFolder(state, {
+      folderId: "folder-design",
+      parentId: "folder-research"
+    })
 
     expect(state).toEqual(snapshot)
   })

@@ -721,3 +721,31 @@
 - 最大5階層・循環・重複配置チェックは Issue 014 のスコープとして未実装のまま残した
 - unit テスト 24 件を追加し、`pnpm lint` / `pnpm typecheck` / `pnpm test`（73件） / `pnpm build` の成功を確認した
 - 教訓: この repo の tsconfig では `!result.ok` による判別 union の絞り込みが効かないため、既存コード同様 `result.ok === false` を使う
+
+## Issue 014: フォルダ階層の制約処理を実装する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 014（GitHub #16）を実装対象とする
+- Issue 012 と同じ `feature/issue-012-virtual-folder-service` ブランチで、`folder-service.ts` への追記として実装する
+- `MAX_FOLDER_DEPTH = 5` を `src/domain/folder.ts` に定義し、作成・移動時に超過を防ぐ（data-model.md §5）
+- 循環参照チェックの前提となる `moveFolder`（parentId 変更）を追加し、自分自身・子孫への移動を拒否する
+- 同一フォルダの重複配置は「作成時の ID 重複チェック」と「移動時の remove → insert」で構造的に防ぐ
+- フォルダ削除時の扱いは Issue 012 の `deleteFolder` で定義済み（サブツリー削除 + 未分類化）
+
+### 実施計画
+
+- [x] `MAX_FOLDER_DEPTH` と深さ・サブツリー高さの算出ヘルパーを実装する
+- [x] `createFolder` に深さ制限と ID 重複チェックを追加する
+- [x] `moveFolder` を実装する（循環・深さ・重複配置の制約込み）
+- [x] 制約ケースの unit テストを追加する
+- [x] `pnpm lint` `pnpm typecheck` `pnpm test` `pnpm build` で検証する
+
+### レビュー
+
+- `src/domain/folder.ts` に `MAX_FOLDER_DEPTH = 5` を追加した（data-model.md §5 の正本値）
+- `folder-service.ts` に `folderDepth` / `folderSubtreeHeight` を追加した。どちらも visited 判定を持ち、破損データで parentId が循環していても無限ループしない
+- `createFolder` は親の深さ +1 が 5 を超えると `max_depth_exceeded`、注入 ID が既存と衝突すると `duplicate_folder_id` を返すようにした
+- `moveFolder` を追加した。自分自身・子孫への移動は `circular_reference`、移動先の深さ + サブツリー高さが 5 を超えると `max_depth_exceeded` で拒否する。ツリーは remove → insert の順で更新するため同一フォルダの重複配置は構造的に起きない
+- フォルダ削除時の扱い（サブツリー削除・配下ファイルの未分類化・システムフォルダ除外）は Issue 012 の `deleteFolder` で定義済み
+- 制約ケースのテスト 13 件を追加し、`pnpm lint` / `pnpm typecheck` / `pnpm test`（86件） / `pnpm build` の成功を確認した
