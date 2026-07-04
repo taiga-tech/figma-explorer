@@ -49,3 +49,12 @@ pnpm package
 ```
 
 配布用アーカイブを生成します。
+
+## テスト
+
+```bash
+pnpm test
+```
+
+Vitest + jsdom で unit / DOM fixture テストを実行します。
+テスト戦略は `docs/architecture/testing-strategy.md` を参照してください。

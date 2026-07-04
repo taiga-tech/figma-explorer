@@ -24,6 +24,9 @@ Figma DOM 依存部分の壊れやすさをテストで補う。ピラミッド�
   scan 層が使う DOM API を十分カバーする
 - happy-dom は高速だが API 互換の穴があるため、実 Figma DOM の
   フィクスチャを扱う本プロジェクトでは jsdom を優先する
+- 既知の制約: jsdom は `innerText` を実装していないため、
+  `vitest.setup.ts` で `textContent` ベースの近似 polyfill を適用する。
+  可視性（display/visibility）に依存するテストは書かない
 - 実行コマンドは `pnpm test`（`vitest run`）とし、導入時に
   CLAUDE.md / README のコマンド一覧へ追記する
 

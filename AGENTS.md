@@ -13,6 +13,7 @@
 - `pnpm build`: creates the production build in `build/`.
 - `pnpm package`: generates the packaged extension artifact for distribution.
 - `pnpm format`: runs Prettier across `**/*.{ts,tsx,md}`.
+- `pnpm test`: runs Vitest (unit + jsdom DOM fixture tests). See `docs/architecture/testing-strategy.md`.
 
 ## Coding Style & Naming Conventions
 
@@ -23,9 +24,9 @@
 
 ## Testing Guidelines
 
-- No automated test suite is committed yet. At minimum, run `pnpm build` and smoke-test the extension in Chrome before opening a PR.
+- Run `pnpm test` (Vitest + jsdom) and `pnpm build`, then smoke-test the extension in Chrome before opening a PR.
+- Place tests next to the module under test as `*.test.ts` / `*.test.tsx`. DOM fixtures live in `tests/fixtures/`.
 - Verify the popup UI and any new entrypoints after reloading the unpacked extension.
-- If you introduce test infrastructure later, prefer `*.test.ts` or `*.test.tsx` naming and document the command here.
 
 ## Commit & Pull Request Guidelines
 
