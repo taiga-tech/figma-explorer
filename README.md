@@ -53,8 +53,10 @@ pnpm package
 ## テスト
 
 ```bash
+pnpm lint
 pnpm test
 ```
 
-Vitest + jsdom で unit / DOM fixture テストを実行します。
+`pnpm lint` は ESLint と Prettier の check mode をまとめて実行します。
+`pnpm test` は Vitest + jsdom で unit / DOM fixture テストを実行します。
 テスト戦略は `docs/architecture/testing-strategy.md` を参照してください。

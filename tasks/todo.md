@@ -551,3 +551,55 @@
 - draft PR #31 を develop 向けに作成した（https://github.com/taiga-tech/figma-explorer/pull/31）
 - 本文先頭に Closes #26 / #30 / #8 / #7 / #27 / #11 / #10 を記載し、7 Issue と紐づけた
 - 検証チェックリストに「実 Figma での smoke test 未実施（#10 の UI）」をマージ前の要確認事項として明記した
+
+### CI を作成する
+
+#### 仕様
+
+- GitHub Actions で pull request / push 時に `lint` `test` `build` を自動検証する
+- `lint` は整形違反を検知するチェック専用コマンドとして定義し、既存の `format` は書き込み用途のまま残す
+- Node / pnpm のセットアップは現在の repo に合わせて固定し、依存解決をキャッシュする
+- 既存の workflow と衝突せず、CI 用 workflow は失敗箇所が分かりやすい job 名にする
+
+#### 実施計画
+
+- [x] 既存の package scripts と workflow 構成を確認する
+- [x] `package.json` に CI 用の `lint` script を追加する
+- [x] `.github/workflows/ci.yml` を追加して `lint` `test` `build` を実行する
+- [x] workflow の構文とローカルの `pnpm lint` `pnpm test` `pnpm build` を確認する
+- [x] レビューと教訓を追記する
+
+#### レビュー
+
+- `package.json` に `pnpm lint` を追加し、Prettier の check mode を CI 用の整形検証コマンドとして分離した
+- `.github/workflows/ci.yml` を追加し、`push` / `pull_request` ごとに `lint` `test` `build` を matrix job で独立実行するようにした
+- 依存セットアップは `pnpm/action-setup@v4` + `actions/setup-node@v4` + `pnpm install --frozen-lockfile` に統一した
+- 既存の `.github/workflows/submit.yml` も同じ pnpm / Node 20 構成へ更新し、Node 16 と旧 action major 依存を解消した
+- `AGENTS.md` `CLAUDE.md` `README.md` のコマンド案内を `lint` 追加後の実態に合わせて更新した
+- 検証: `pnpm lint` 成功、`pnpm test` 45件成功、`pnpm build` 成功、`actionlint .github/workflows/*.yml` 成功
+
+### ESLint を導入する
+
+#### 仕様
+
+- TypeScript / React / Vitest を含む現行 repo に ESLint を導入する
+- `lint` は ESLint を中心に実行し、既存の Prettier 整形チェックも維持して CI からまとめて検証できるようにする
+- browser / service worker / node / vitest の実行環境差分を config 側で吸収する
+- 既存 CI とドキュメントのコマンド案内を ESLint 導入後の実態へ更新する
+
+#### 実施計画
+
+- [x] 現状の lint 運用と対象ファイルを確認する
+- [x] ESLint 依存と `eslint.config.*` を追加する
+- [x] `package.json` / CI / 案内文を ESLint 前提に更新する
+- [x] `pnpm lint` `pnpm test` `pnpm build` `actionlint` を実行して確認する
+- [x] レビューと教訓を追記する
+
+#### レビュー
+
+- `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals`, `eslint-config-prettier` を devDependencies に追加した
+- `eslint.config.mjs` を新設し、TypeScript 推奨ルール、React Hooks ルール、browser/service worker/webextensions globals、Node/Vitest 用 override を設定した
+- `pnpm lint` は `pnpm lint:eslint && pnpm lint:format` に変更し、ESLint と Prettier の check をまとめて CI から実行できるようにした
+- Plasmo の content script entry は `config` / `getStyle` の export が必要なため、`src/contents/**/*.tsx` では `react-refresh/only-export-components` を無効化して誤検知を避けた
+- `AGENTS.md` `CLAUDE.md` `README.md` の `pnpm lint` 説明を ESLint 導入後の実態へ更新した
+- 検証: `pnpm lint` 成功、`pnpm test` 45件成功、`pnpm build` 成功、`actionlint .github/workflows/*.yml` 成功

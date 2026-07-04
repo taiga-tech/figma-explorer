@@ -7,6 +7,9 @@
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
+    "lint": "pnpm lint:eslint && pnpm lint:format",
+    "lint:eslint": "eslint . --max-warnings 0",
+    "lint:format": "prettier --check \"**/*.{ts,tsx,md,css}\"",
     "package": "plasmo package",
     "format": "prettier --write \"**/*.{ts,tsx,md,css}\"",
     "test": "vitest run"
@@ -18,14 +21,21 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
     "@types/chrome": "0.0.258",
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
     "jsdom": "^29.1.1",
     "prettier": "3.2.4",
     "typescript": "5.3.3",
+    "typescript-eslint": "^8.62.1",
     "vitest": "^4.1.9"
   },
   "manifest": {
