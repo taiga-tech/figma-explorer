@@ -684,6 +684,40 @@
 
 #### 実施計画
 
-- [ ] PR 対象ファイルを確認し、無関係な差分を除外する
-- [ ] Issue 009 の変更をコミットして branch を push する
-- [ ] `gh` で `develop` 向け PR を作成する
+- [x] PR 対象ファイルを確認し、無関係な差分を除外する
+- [x] Issue 009 の変更をコミットして branch を push する
+- [x] `gh` で `develop` 向け PR を作成する
+
+#### レビュー
+
+- PR #32 を作成し、`develop` へマージ済み（2026-07-04 の Merge pull request #32 で確認）
+
+## Issue 012: 仮想フォルダ型とサービスを実装する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 012（GitHub #12）を実装対象とする
+- `VirtualFolder` / `FolderTreeNode` は Issue 010 で `src/domain/folder.ts` に定義済みのため流用する
+- `src/features/folders/folder-tree-service.ts` に folderTree の純関数ヘルパーを実装する
+- `src/features/folders/folder-service.ts` にフォルダ作成・名前変更・削除を Result 形式で実装する
+- 削除はシステムフォルダを対象外にし、配下サブツリーの削除と該当 assignments の `folderId: null` 化を行う（state-management.md §9）
+- 最大5階層・循環・重複配置の制約チェックは Issue 014 の対象なので今回は実装しない
+
+### 実施計画
+
+- [x] `git flow feature start issue-012-virtual-folder-service` でブランチを作成する
+- [x] `folder-tree-service.ts`（挿入・削除・探索・子孫収集）を実装する
+- [x] `folder-service.ts`（createFolder / renameFolder / deleteFolder）を実装する
+- [x] 各サービスの unit テストを追加する
+- [x] `pnpm lint` `pnpm typecheck` `pnpm test` `pnpm build` で検証する
+- [x] レビューと教訓を追記する
+
+### レビュー
+
+- `src/features/folders/folder-tree-service.ts` に folderTree の純関数ヘルパー（作成・探索・挿入・サブツリー削除・ID収集）を実装した。すべて元のツリーを変更しない immutable 実装にした
+- `src/features/folders/folder-service.ts` に `createFolder` / `renameFolder` / `deleteFolder` を `Result<_, FolderOperationError>` 形式で実装した（error-handling.md の「features サービスは Result 必須」に準拠）
+- `createFolder` は名前 trim・空名エラー・親存在チェック・同一親内の末尾 `sortOrder` 採番を行い、`createId` / `now` を注入可能にしてテストを決定的にした
+- `deleteFolder` は `parentId` 連鎖から子孫を収集してサブツリーごと削除し、該当 assignments を `folderId: null`（未分類）へ戻す state-management.md §9 の流れを実装した。`isSystem` フォルダは `system_folder_not_deletable` で拒否する
+- 最大5階層・循環・重複配置チェックは Issue 014 のスコープとして未実装のまま残した
+- unit テスト 24 件を追加し、`pnpm lint` / `pnpm typecheck` / `pnpm test`（73件） / `pnpm build` の成功を確認した
+- 教訓: この repo の tsconfig では `!result.ok` による判別 union の絞り込みが効かないため、既存コード同様 `result.ok === false` を使う
