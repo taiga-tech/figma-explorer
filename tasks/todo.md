@@ -624,3 +624,24 @@
 - `src/figma-explorer/styles/figma-explorer.css` では `.figma-explorer-panel__section` 全体を伸ばさず、`.figma-explorer-panel__section--detected-files` のみに `flex: 1` と `min-height: 0` を付与した
 - `.figma-explorer-panel__detected-files` は `flex: 1` と `min-height: 0` を持つスクロール領域に変更し、ヘッダーや他セクションを固定したまま一覧だけが縦スクロールするようにした
 - 検証: `pnpm lint` 成功、`pnpm build` 成功
+
+### CI の Node と pnpm バージョンを更新する
+
+#### 仕様
+
+- GitHub Actions の CI / submit workflow で使う Node を `26` に更新する
+- GitHub Actions の pnpm setup は `10` 系指定へ揃える
+- 既存の action major や install 手順は維持しつつ、バージョン指定だけを今回の要件に合わせる
+
+#### 実施計画
+
+- [x] 現在の workflow 内の Node / pnpm 指定箇所を確認する
+- [x] `ci.yml` と `submit.yml` の version 指定を `node 26` / `pnpm 10` に更新する
+- [x] `actionlint` と差分確認を行い、レビューと教訓を追記する
+
+#### レビュー
+
+- `.github/workflows/ci.yml` の `actions/setup-node` を `node-version: 26` に更新した
+- `.github/workflows/ci.yml` の `pnpm/action-setup` は patch 固定の `10.34.4` から major 指定の `10` に変更した
+- `.github/workflows/submit.yml` も同様に `node-version: 26` と `pnpm version: 10` へ更新し、CI と submit の実行環境を揃えた
+- 検証: `actionlint .github/workflows/*.yml` 成功

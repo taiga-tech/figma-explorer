@@ -39,6 +39,7 @@
 - Figma の一覧は仮想化されており DOM ノードが使い回されるため、MAIN world 側で書き込む解決済み属性は `data-index` などの識別子が変化したら必ず再計算し、古いカードの値を持ち越さないようにする
 - CI 用の整形検証は `format` と兼用せず、`prettier --check` の専用 `lint` script を分ける。GitHub Actions からは `--write` 系コマンドを呼ばない
 - workflow を追加・更新するときは、新しい CI だけでなく既存 workflow の Node / `uses:` major も同時に見直し、セットアップ手順を `pnpm/action-setup` + `actions/setup-node` + `pnpm install --frozen-lockfile` に寄せる
+- CI の実行環境バージョンをユーザー指定で更新するときは、patch 固定を続けず指定粒度に合わせる。今回は `node: 26` `pnpm: 10` なので workflow も major 指定へ揃える
 - ESLint を flat config で導入するときは、browser / service worker / webextensions / node / test の globals を最初から分けておく。拡張機能 repo では `chrome` と Vitest/Node の実行環境が混ざりやすい
 - Plasmo の `src/contents/*.tsx` entry は `config` や `getStyle` を top-level export するため、`react-refresh/only-export-components` の対象から外す。entry 制約に対する誤検知をコード側に押し付けない
 - flex column のパネル内で特定セクションだけをスクロールさせたいときは、スクロール要素自身だけでなく、その親 flex item にも `min-height: 0` を付ける。`overflow: auto` だけでは一覧が縮まず効かない
