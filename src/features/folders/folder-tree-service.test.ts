@@ -6,7 +6,8 @@ import {
   createFolderTreeNode,
   findFolderTreeNode,
   insertFolderTreeNode,
-  removeFolderTreeNode
+  removeFolderTreeNode,
+  setFolderTreeNodeExpanded
 } from "./folder-tree-service"
 
 const buildTree = (): FolderTreeNode[] => [
@@ -106,6 +107,26 @@ describe("removeFolderTreeNode", () => {
     const snapshot = structuredClone(original)
 
     removeFolderTreeNode(original, "child-a1")
+
+    expect(original).toEqual(snapshot)
+  })
+})
+
+describe("setFolderTreeNodeExpanded", () => {
+  it("ネストしたノードの展開状態だけを更新する", () => {
+    const tree = setFolderTreeNodeExpanded(buildTree(), "child-a1", true)
+
+    expect(findFolderTreeNode(tree, "child-a1")?.expanded).toBe(true)
+    // 他ノードの展開状態は変えない
+    expect(findFolderTreeNode(tree, "root-a")?.expanded).toBe(true)
+    expect(findFolderTreeNode(tree, "root-b")?.expanded).toBe(false)
+  })
+
+  it("元のツリーを変更しない", () => {
+    const original = buildTree()
+    const snapshot = structuredClone(original)
+
+    setFolderTreeNodeExpanded(original, "child-a1", true)
 
     expect(original).toEqual(snapshot)
   })

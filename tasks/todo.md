@@ -749,3 +749,36 @@
 - `moveFolder` を追加した。自分自身・子孫への移動は `circular_reference`、移動先の深さ + サブツリー高さが 5 を超えると `max_depth_exceeded` で拒否する。ツリーは remove → insert の順で更新するため同一フォルダの重複配置は構造的に起きない
 - フォルダ削除時の扱い（サブツリー削除・配下ファイルの未分類化・システムフォルダ除外）は Issue 012 の `deleteFolder` で定義済み
 - 制約ケースのテスト 13 件を追加し、`pnpm lint` / `pnpm typecheck` / `pnpm test`（86件） / `pnpm build` の成功を確認した
+
+## Issue 013: フォルダツリーUIを実装する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 013（GitHub #17）を実装対象とする
+- `FolderTree` / `FolderTreeItem` を既存コンポーネントと同じ `src/figma-explorer/components/` に作成する
+- WAI-ARIA tree パターンに従い `role="tree"` / `role="treeitem"` / `aria-expanded` / `aria-selected` / `role="group"` を付与する（ui-and-components.md §6）
+- フォルダ状態は organizer-storage（Issue 011）から復元し、作成・展開切替のたびに保存する `organizer-folders-store` を新設する
+- 新規作成ボタンからインラインフォームを開き、選択中フォルダの配下（未選択ならルート）へ作成する
+- 展開/折りたたみは `FolderTreeNode.expanded` を更新して永続化する
+- キーボード操作の拡張は Issue 023 のスコープなので実装しない
+
+### 実施計画
+
+- [x] `folder-tree-service.ts` に展開状態の更新ヘルパーを追加する
+- [x] `organizer-folders-store.ts` と `use-organizer-folders.ts` を実装する
+- [x] `FolderTree.tsx` / `FolderTreeItem.tsx` を実装する
+- [x] `OrganizerPanel` に Folders セクション（新規作成フォーム込み）を追加し、`FigmaExplorerPanel` から接続する
+- [x] スタイルとテストを追加する
+- [x] `pnpm lint` `pnpm typecheck` `pnpm test` `pnpm build` で検証する
+
+### レビュー
+
+- `folder-tree-service.ts` に `setFolderTreeNodeExpanded` を追加し、展開状態の更新も immutable な純関数に揃えた
+- `organizer-folders-store.ts` を新設し、購読開始時に organizer-storage の `loadOrMigrate` で復元、フォルダ作成・展開切替のたびに `save` する構成にした（useSyncExternalStore 用の subscribe / getSnapshot、テスト用に storage 注入可能）
+- 読み込み失敗は `status: "error"`、保存失敗・破損退避の警告は `storageError` として snapshot に載せ、UI で日本語文言に変換して表示する
+- `FolderTree` / `FolderTreeItem` を追加し、`role="tree"` / `role="treeitem"` / `role="group"` / `aria-expanded`（子を持つノードのみ） / `aria-selected` / `aria-level` を付与した
+- `FolderSection` を追加し、新規作成ボタン → インラインフォーム → 選択中フォルダ配下（未選択ならルート）へ作成する導線を実装した。親配下へ作成したときは親を自動展開する
+- `FigmaExplorerPanel` にフォルダ選択状態（クリックで選択/解除）を持たせ、`OrganizerPanel` へ `folderSection` として接続した
+- docs/architecture/plasmo-architecture.md の現状ディレクトリと責務分割表を Issue 013 完了時点へ更新した
+- テスト 11 件を追加（tree サービス 2、FolderTree 3、フォルダストア 6）し、`pnpm lint` / `pnpm typecheck` / `pnpm test`（97件） / `pnpm build` の成功を確認した
+- 未実施: 実 Figma Drafts 上での smoke test（フォルダ作成 → リロード後の復元、展開状態の永続化、Figma 本体 UI との干渉確認）
