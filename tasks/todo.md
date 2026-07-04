@@ -645,3 +645,45 @@
 - `.github/workflows/ci.yml` の `pnpm/action-setup` は patch 固定の `10.34.4` から major 指定の `10` に変更した
 - `.github/workflows/submit.yml` も同様に `node-version: 26` と `pnpm version: 10` へ更新し、CI と submit の実行環境を揃えた
 - 検証: `actionlint .github/workflows/*.yml` 成功
+
+### Issue 009: OrganizerPanelの基本UIを実装する
+
+#### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 009 を実装対象とする
+- 仮の `FigmaExplorerPanel` の表示責務を `OrganizerPanel` 系コンポーネントへ分割する
+- 最低限 `OrganizerPanel` `PanelHeader` `FileList` `FileListItem` を作成する
+- 一覧は現行のスキャン結果を使って描画し、取得件数を表示する
+- `FileList` に `role="list"`、各項目に `role="listitem"` と `aria-selected` を付ける
+- 既存の再スキャン導線と scan error / empty の表示は維持する
+
+#### 実施計画
+
+- [x] Issue 009 の受け入れ条件と現行パネル実装の差分を確認する
+- [x] `git flow feature start issue-009-organizer-panel-basic-ui` でブランチを作成する
+- [x] `OrganizerPanel` `PanelHeader` `FileList` `FileListItem` を実装する
+- [x] `FigmaExplorerPanel` から新しい UI コンポーネントを利用するよう差し替える
+- [x] 必要なスタイルとテストを追加する
+- [x] `pnpm lint` `pnpm test` `pnpm build` を実行して確認する
+- [x] レビューと教訓を追記する
+
+#### レビュー
+
+- `feature/issue-009-organizer-panel-basic-ui` を `git flow feature start` で作成した
+- `src/figma-explorer/components/OrganizerPanel.tsx` `PanelHeader.tsx` `FileList.tsx` `FileListItem.tsx` を追加し、仮パネルの表示責務を分割した
+- `src/figma-explorer/components/FigmaExplorerPanel.tsx` はスキャン結果を `OrganizerPanel` へ渡すコンテナに寄せ、`createFileId()` で選択可能な一覧 ID を安定化した
+- `FileList` に `role="list"`、各 `FileListItem` に `role="listitem"` と `aria-selected` を付け、一覧項目へ明示的な「開く」導線を追加した
+- `src/figma-explorer/styles/figma-explorer.css` を更新し、件数カード、選択状態、一覧レイアウトを OrganizerPanel 向けに調整した
+- `src/figma-explorer/components/*.test.tsx` を追加し、一覧の role / selected 状態と OrganizerPanel の summary / error banner を検証した
+- component test のため `tsconfig.json` に `jsx: react-jsx` を追加し、Vitest から `.tsx` コンポーネントを正しく import できるようにした
+- `package.json` に `pnpm typecheck` を追加し、README / AGENTS / architecture docs のコマンド一覧も更新した
+- 検証: `pnpm lint` 成功、`pnpm typecheck` 成功、`pnpm test` 49件成功、`pnpm build` 成功
+- 未実施: 実 Figma Drafts 上での smoke test は未実施。拡張再読み込み後に一覧選択・`開く` リンク・再スキャン導線の目視確認が必要
+
+### Issue 009 の PR を作成する
+
+#### 実施計画
+
+- [ ] PR 対象ファイルを確認し、無関係な差分を除外する
+- [ ] Issue 009 の変更をコミットして branch を push する
+- [ ] `gh` で `develop` 向け PR を作成する

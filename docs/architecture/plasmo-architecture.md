@@ -144,6 +144,7 @@ tests/
 ```bash
 pnpm dev      # 開発ビルド（build/chrome-mv3-dev を Chrome に読み込む）
 pnpm build    # 本番ビルド
+pnpm typecheck # TypeScript 型チェック
 pnpm format   # Prettier 整形
 pnpm test     # unit / DOM fixture テスト（Issue 020 で導入予定）
 ```

@@ -73,7 +73,7 @@ describe("organizerStorage.loadOrMigrate", () => {
 
     expect(result.ok).toBe(false)
 
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.error.kind).toBe("storage_migration_failed")
     }
 
@@ -110,7 +110,7 @@ describe("organizerStorage.loadOrMigrate", () => {
 
     expect(result.ok).toBe(false)
 
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.error.kind).toBe("storage_load_failed")
     }
   })
@@ -146,7 +146,7 @@ describe("organizerStorage.save / clear", () => {
 
     expect(result.ok).toBe(false)
 
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.error.kind).toBe("storage_save_failed")
     }
   })

@@ -121,8 +121,8 @@ export const createOrganizerStorage = (
       const initialState = createInitialPersistentState()
       const saveResult = await save(initialState)
 
-      if (!saveResult.ok) {
-        return saveResult
+      if (saveResult.ok === false) {
+        return err(saveResult.error)
       }
 
       return ok({
@@ -135,8 +135,8 @@ export const createOrganizerStorage = (
     if (decision.migratedFrom !== null) {
       const saveResult = await save(decision.state)
 
-      if (!saveResult.ok) {
-        return saveResult
+      if (saveResult.ok === false) {
+        return err(saveResult.error)
       }
     }
 
