@@ -537,3 +537,17 @@
 - Issue 008（#10）: 検出エラーを scan_dom_missing へ分類する toOrganizerScanError、ストアの rescanFileCards、パネルのエラーバナー + 再スキャンボタンを実装
 - 検証: pnpm test 45件パス、pnpm build 成功、pnpm format 済み
 - 未実施: Issue 008 の UI 変更は実 Figma での smoke test が未実施（拡張再読み込み + 再スキャンボタンの動作確認が必要）。push / PR 作成は未実施
+
+### 基盤フェーズの PR を作成する
+
+#### 実施計画
+
+- [x] feature/v0.1-foundation を origin へ publish する
+- [x] gh で draft PR を作成する
+
+#### レビュー
+
+- `git push -u origin feature/v0.1-foundation` でブランチを publish した
+- draft PR #31 を develop 向けに作成した（https://github.com/taiga-tech/figma-explorer/pull/31）
+- 本文先頭に Closes #26 / #30 / #8 / #7 / #27 / #11 / #10 を記載し、7 Issue と紐づけた
+- 検証チェックリストに「実 Figma での smoke test 未実施（#10 の UI）」をマージ前の要確認事項として明記した
