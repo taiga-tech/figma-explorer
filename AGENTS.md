@@ -12,6 +12,7 @@
 - `pnpm dev`: starts the Plasmo development build. Load `build/chrome-mv3-dev` in Chrome for local testing.
 - `pnpm build`: creates the production build in `build/`.
 - `pnpm lint`: runs ESLint for TypeScript/React code and then Prettier check mode across `**/*.{ts,tsx,md,css}`.
+- `pnpm typecheck`: runs `tsc --noEmit` for TypeScript type checking.
 - `pnpm package`: generates the packaged extension artifact for distribution.
 - `pnpm format`: runs Prettier across `**/*.{ts,tsx,md,css}`.
 - `pnpm test`: runs Vitest (unit + jsdom DOM fixture tests). See `docs/architecture/testing-strategy.md`.
@@ -25,7 +26,7 @@
 
 ## Testing Guidelines
 
-- Run `pnpm lint`, `pnpm test`, and `pnpm build`, then smoke-test the extension in Chrome before opening a PR.
+- Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`, then smoke-test the extension in Chrome before opening a PR.
 - Place tests next to the module under test as `*.test.ts` / `*.test.tsx`. DOM fixtures live in `tests/fixtures/`.
 - Verify the popup UI and any new entrypoints after reloading the unpacked extension.
 

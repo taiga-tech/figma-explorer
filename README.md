@@ -54,9 +54,11 @@ pnpm package
 
 ```bash
 pnpm lint
+pnpm typecheck
 pnpm test
 ```
 
 `pnpm lint` は ESLint と Prettier の check mode をまとめて実行します。
+`pnpm typecheck` は TypeScript の型チェックを `tsc --noEmit` で実行します。
 `pnpm test` は Vitest + jsdom で unit / DOM fixture テストを実行します。
 テスト戦略は `docs/architecture/testing-strategy.md` を参照してください。

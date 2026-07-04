@@ -5,7 +5,7 @@ import { createFileId } from "./create-file-id"
 const expectOk = (url: string) => {
   const result = createFileId(url)
 
-  if (!result.ok) {
+  if (result.ok === false) {
     throw new Error(`expected ok for ${url}, got ${result.error.kind}`)
   }
 

@@ -43,3 +43,5 @@
 - ESLint を flat config で導入するときは、browser / service worker / webextensions / node / test の globals を最初から分けておく。拡張機能 repo では `chrome` と Vitest/Node の実行環境が混ざりやすい
 - Plasmo の `src/contents/*.tsx` entry は `config` や `getStyle` を top-level export するため、`react-refresh/only-export-components` の対象から外す。entry 制約に対する誤検知をコード側に押し付けない
 - flex column のパネル内で特定セクションだけをスクロールさせたいときは、スクロール要素自身だけでなく、その親 flex item にも `min-height: 0` を付ける。`overflow: auto` だけでは一覧が縮まず効かない
+- Vitest で `.tsx` コンポーネントを直接 import するテストを追加するときは、`tsconfig.json` の `jsx` を `react-jsx` へ明示しておく。Plasmo ベース設定のままだと Vite の import analysis が TSX を解釈できず、component test が 0 件失敗になる
+- 分岐が 3 通り以上ある表示ロジックは、入れ子の三項演算子や `else if` 連鎖ではなく `switch` で書く。今回の `scanStatus` / empty message のような union 分岐は `switch` に寄せた方が読みやすくレビューもしやすい
