@@ -505,3 +505,35 @@
 - README.md に表記ルール（実装/予定ラベル、型定義の正本ファイル表、用語統一）を新設した
 - 検証: pnpm format 済み、内部リンク切れ 0 件、docs 中の src パス参照は「予定」2件を除き実在、
   セレクタ台帳と src/features/scan の定数が一致、変更ファイルは docs/ と tasks/ のみ
+
+### 基盤フェーズを実装する（Issue 020 → 021 → 007 → 022 → 010 → 011）
+
+#### 仕様
+
+- docs の開発順序に従い、基盤（テスト・Result・FileId・migration）から実装する
+- 各 Issue ごとにコミットを分け、`pnpm test` と `pnpm build` を通す
+- GitHub Issue 対応: 020=#26, 021=#30, 007=#8, 022=#27, 010=#7, 011=#11
+
+#### 実施計画
+
+- [x] Issue 020: Vitest + jsdom 導入、既存純関数の unit テスト、fixtures 雛形
+- [x] Issue 021: `src/utils/result.ts`（Result / OrganizerError）+ テスト
+- [x] Issue 007: `create-file-id.ts`（file key 抽出・正規化・hash fallback）+ テスト
+- [x] Issue 010: `src/domain/` の状態型（SCHEMA_VERSION 含む）
+- [x] Issue 022: migration 基盤（3分岐）+ テスト
+- [x] Issue 011: Plasmo Storage Repository（loadOrMigrate / save / clear）
+- [x] 検証: pnpm test / pnpm build / pnpm format
+- [x] Issue 008: スキャン失敗と0件の区別（scan_dom_missing 分類、再スキャンボタン、エラーバナー）
+
+#### レビュー
+
+- ブランチ feature/v0.1-foundation に Issue ごとの7コミットを積んだ（テスト基盤 → Result 型 → FileId → 状態型 → migration → Storage → スキャンエラー区別）
+- Issue 020（#26）: Vitest + jsdom を導入し `pnpm test` を追加。jsdom は innerText 未実装のため vitest.setup.ts で textContent ベースの polyfill を適用し、testing-strategy.md に既知の制約として追記した。README / AGENTS.md（CLAUDE.md の実体）のコマンド一覧も更新
+- Issue 021（#30）: src/utils/result.ts に Result / ok / err / OrganizerError（kind 7種）を実装
+- Issue 007（#8）: create-file-id.ts。file key 第一候補（8ルート対応）、タイトルスラッグ・クエリ不変の正規化、FNV-1a hash fallback、missing_url / unsupported_url の Result 形式
+- Issue 010（#7）: src/domain/ に folder.ts と organizer-state.ts（SCHEMA_VERSION=1、PersistentState、RuntimeState、createInitialPersistentState）
+- Issue 022（#27）: migrate-persistent-state.ts。ready / future_version / corrupted の3分岐を純関数で実装し、形状検証も実施
+- Issue 011（#11）: organizer-storage.ts。backend 注入でテスト可能にし、loadOrMigrate（破損時はバックアップキーへ退避→初期化）、直列化された save、バックアップを残す clear を実装
+- Issue 008（#10）: 検出エラーを scan_dom_missing へ分類する toOrganizerScanError、ストアの rescanFileCards、パネルのエラーバナー + 再スキャンボタンを実装
+- 検証: pnpm test 45件パス、pnpm build 成功、pnpm format 済み
+- 未実施: Issue 008 の UI 変更は実 Figma での smoke test が未実施（拡張再読み込み + 再スキャンボタンの動作確認が必要）。push / PR 作成は未実施
