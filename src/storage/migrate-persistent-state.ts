@@ -1,7 +1,4 @@
-import {
-  SCHEMA_VERSION,
-  type PersistentState
-} from "../domain/organizer-state"
+import { SCHEMA_VERSION, type PersistentState } from "../domain/organizer-state"
 import { createOrganizerError, type OrganizerError } from "../utils/result"
 
 type Migration = (state: Record<string, unknown>) => Record<string, unknown>
@@ -93,7 +90,6 @@ export const migratePersistentState = (raw: unknown): MigrationDecision => {
   return {
     type: "ready",
     state: current,
-    migratedFrom:
-      originalVersion === SCHEMA_VERSION ? null : originalVersion
+    migratedFrom: originalVersion === SCHEMA_VERSION ? null : originalVersion
   }
 }

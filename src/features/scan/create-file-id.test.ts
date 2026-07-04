@@ -14,12 +14,10 @@ const expectOk = (url: string) => {
 
 describe("createFileId", () => {
   it("designルートからfile keyを抽出する", () => {
-    expect(expectOk("https://www.figma.com/design/AbC123/sales-list")).toEqual(
-      {
-        fileId: "AbC123",
-        source: "figma_file_key"
-      }
-    )
+    expect(expectOk("https://www.figma.com/design/AbC123/sales-list")).toEqual({
+      fileId: "AbC123",
+      source: "figma_file_key"
+    })
   })
 
   it("対象パスパターンすべてからfile keyを抽出する", () => {

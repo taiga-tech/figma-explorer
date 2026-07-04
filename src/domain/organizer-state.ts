@@ -1,5 +1,5 @@
-import type { DraftFile } from "../features/scan/draft-file"
 import type { FileId } from "../features/scan/create-file-id"
+import type { DraftFile } from "../features/scan/draft-file"
 import type { OrganizerError } from "../utils/result"
 import type { FolderId, FolderTreeNode, VirtualFolder } from "./folder"
 

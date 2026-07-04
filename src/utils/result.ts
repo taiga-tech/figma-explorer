@@ -31,4 +31,5 @@ export const createOrganizerError = (
   kind: OrganizerErrorKind,
   message: string,
   cause?: unknown
-): OrganizerError => (cause === undefined ? { kind, message } : { kind, message, cause })
+): OrganizerError =>
+  cause === undefined ? { kind, message } : { kind, message, cause }
