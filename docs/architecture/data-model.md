@@ -1,5 +1,8 @@
 # データモデル
 
+本書は `PersistentState` とスキーマ移行の正本である。
+Result 型と `OrganizerError` は [error-handling.md](./error-handling.md) を参照。
+
 ## 1. 基本方針
 
 スキャンで得たファイル一覧と、保存する整理情報を分ける。
@@ -8,10 +11,12 @@
 - `PersistentState`: 拡張機能の保存領域に保持する情報
 
 Drafts画面でファイルが一時的に表示されない場合でも、分類情報は消さない。
+拡張機能の更新・スキーマ変更でユーザーの分類データを失わない（移行は §10）。
 
 ## 2. DraftFile
 
 Figma Drafts画面から読み取る実行時データ。
+実装済み: `src/features/scan/draft-file.ts`
 
 ```ts
 type FileId = string
@@ -35,18 +40,60 @@ type FileScanStatus = "active" | "parse_error"
 
 ## 3. FileId生成
 
+分類情報（`assignments`）のキーになるため、同一ファイルの再スキャンで
+必ず同一 ID になることを最優先の保証とする。
+
 ```ts
-type CreateFileIdResult =
-  | { ok: true; fileId: FileId; source: "figma_url" | "url_hash" }
-  | { ok: false; reason: "missing_url" | "unsupported_url" }
+type FileIdSource = "figma_file_key" | "url_hash"
+
+type CreateFileIdValue = {
+  fileId: FileId
+  source: FileIdSource
+}
+
+type CreateFileIdError = {
+  kind: "missing_url" | "unsupported_url"
+}
+
+type CreateFileIdResult = Result<CreateFileIdValue, CreateFileIdError>
 ```
 
 方針:
 
-- Figma file URLから取得できる場合は、URL内のfile keyを使う
-- 取得できない場合はURL文字列のhashをfallbackにする
-- ファイル名だけをIDにしない
-- ID生成処理は `src/features/scan/create-file-id.ts` に集約する
+- 第一候補は bridge が解決した URL（`editUrl` 由来。
+  [scan-pipeline.md](./scan-pipeline.md) 参照）から file key を抽出する
+- file key を取得できない場合のみ、正規化した URL 文字列の hash を使う
+- ファイル名だけをIDにしない（改名で ID が変わるため）
+- ID生成処理は `src/features/scan/create-file-id.ts`（予定）に集約する
+
+file key の抽出対象パスパターン
+（実装済みのルート判定 `FIGMA_ROUTE_FRAGMENT_PATTERN` と揃える）:
+
+| パターン         | 例                                  |
+| ---------------- | ----------------------------------- |
+| `/file/:key/...` | `https://www.figma.com/file/AbC123` |
+| `/design/:key`   | `/design/AbC123/title-slug`         |
+| `/board/:key`    | FigJam                              |
+| `/slides/:key`   | Slides                              |
+| `/proto/:key`    | プロトタイプ                        |
+| `/site/:key`     | Sites                               |
+| `/buzz/:key`     | Buzz                                |
+| `/make/:key`     | Make                                |
+
+hash fallback 用の URL 正規化規則:
+
+- クエリ文字列とフラグメントを除去する
+- 末尾のタイトルスラッグ（`/design/:key/` 以降）を除去する
+- 末尾スラッシュを除去する
+
+安定性の保証条件:
+
+| 変化                              | FileId       |
+| --------------------------------- | ------------ |
+| ファイル改名                      | 変わらない   |
+| タイトルスラッグ・クエリの変化    | 変わらない   |
+| 再スキャン・ページ再読み込み      | 変わらない   |
+| file key 自体の変化（別ファイル） | 変わってよい |
 
 ## 4. VirtualFolder
 
@@ -120,7 +167,7 @@ type StateMeta = {
 
 ```ts
 type PersistentState = {
-  version: number
+  schemaVersion: number
   folders: Record<FolderId, VirtualFolder>
   folderTree: FolderTreeNode[]
   assignments: Record<FileId, FileAssignment>
@@ -129,7 +176,33 @@ type PersistentState = {
 }
 ```
 
-## 10. RuntimeState
+## 10. スキーマバージョニングと移行
+
+```ts
+const SCHEMA_VERSION = 1
+
+type Migration = (state: unknown) => unknown
+
+const migrations: Record<number, Migration> = {
+  // 2: (state) => v1 から v2 への変換
+}
+```
+
+読み込み時（`loadOrMigrate()`。[state-management.md](./state-management.md)
+参照）は保存データの `schemaVersion` で3分岐する。
+
+| 状態                             | 挙動                                                     |
+| -------------------------------- | -------------------------------------------------------- |
+| 過去バージョン                   | migration を昇順に順次適用し、成功したら保存し直す       |
+| 未知の将来バージョン             | 上書き保存を止め、読み取り専用の警告を表示する           |
+| 破損（parse 不能・必須キー欠落） | バックアップキーへ退避してから初期状態を返し、警告を表示 |
+
+- migration は純関数とし、unit テスト対象にする
+  （[testing-strategy.md](./testing-strategy.md)）
+- migration 失敗は `storage_migration_failed`、破損は `storage_corrupted`
+  として扱う（[error-handling.md](./error-handling.md)）
+
+## 11. RuntimeState
 
 ```ts
 type ScanStatus = "idle" | "scanning" | "success" | "empty" | "error"
@@ -144,7 +217,7 @@ type RuntimeState = {
 }
 ```
 
-## 11. ActiveFilter
+## 12. ActiveFilter
 
 ```ts
 type ActiveFilter =
@@ -153,13 +226,13 @@ type ActiveFilter =
   | { type: "uncategorized" }
 ```
 
-## 12. ExportJson
+## 13. ExportJson
 
 ```ts
 type ExportJson = {
   exportedAt: string
   appVersion: string
-  stateVersion: number
+  schemaVersion: number
   files: DraftFile[]
   folders: VirtualFolder[]
   folderTree: FolderTreeNode[]
@@ -170,3 +243,9 @@ type ExportJson = {
 
 JSONにはFigmaファイル本文を含めない。
 保存するのは、Drafts一覧から取得したメタ情報と拡張機能内の整理情報だけとする。
+
+## 14. 関連文書
+
+- [error-handling.md](./error-handling.md) — Result 型・エラー分類の正本
+- [state-management.md](./state-management.md) — 保存・復元・移行の実行フロー
+- [scan-pipeline.md](./scan-pipeline.md) — DraftFile の取得元

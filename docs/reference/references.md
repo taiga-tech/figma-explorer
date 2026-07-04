@@ -29,8 +29,54 @@ URL: https://docs.plasmo.com/framework/workflows/new
 設計への反映:
 
 - 新規作成は `pnpm create plasmo` を使う
-- 共通ロジックは `src/` 配下に置く
-- Plasmoのentryである `contents/`, `popup/`, `options/`, `background/` はroot直下に置く
+- このリポジトリはPlasmoのsrcディレクトリ構成を採用し、entryである `contents/`, `popup.tsx`, `background.ts` を含めてすべて `src/` 配下に置く
+
+## Chrome Extensions
+
+### chrome.scripting.registerContentScripts
+
+URL: https://developer.chrome.com/docs/extensions/reference/api/scripting
+
+設計への反映:
+
+- Plasmoは `world: "MAIN"` のContent Scriptを動的登録で実装するため、
+  `src/background.ts` は静的 `content_scripts` と
+  `getRegisteredContentScripts()` の両方を再注入する
+
+## React
+
+### useSyncExternalStore
+
+URL: https://react.dev/reference/react/useSyncExternalStore
+
+設計への反映:
+
+- 実行時状態ストアの標準パターンとして採用する
+  （`docs/architecture/state-management.md` §2）
+- MutationObserver等のReact外イベント源との接続に使う
+
+## テスト
+
+### Vitest
+
+URL: https://vitest.dev/
+
+設計への反映:
+
+- unit / DOM fixtureテストのランナーとして採用する
+  （`docs/architecture/testing-strategy.md`）
+- Plasmoのビルドと独立に実行する
+
+## アクセシビリティ
+
+### WAI-ARIA Authoring Practices: Tree View Pattern
+
+URL: https://www.w3.org/WAI/ARIA/apg/patterns/treeview/
+
+設計への反映:
+
+- FolderTreeのロール・キーボード操作の基準にする
+  （`docs/architecture/ui-and-components.md` §6, §7）
 
 ## Figma
 

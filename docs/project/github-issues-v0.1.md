@@ -2,8 +2,17 @@
 
 ## 運用方針
 
-v0.1では、以下19件を登録対象とする。
+v0.1では、以下24件を登録対象とする（001〜019 + 設計改善で追加した020〜024）。
 ラベル、命名規則、複数選択、右クリック、ドラッグ操作はv0.2以降へ移す。
+Issue番号は振り直さない（登録済みGitHub Issueとの対応を保つ）。
+
+## ステータス
+
+| Issue    | 状態   | 備考                                       |
+| -------- | ------ | ------------------------------------------ |
+| 001〜006 | 完了   | M1・M2。006はPR #25                        |
+| 007〜019 | 未着手 | 設計改善に合わせて作業内容を更新済み       |
+| 020〜024 | 未着手 | 設計改善（テスト・エラー処理・a11y）で追加 |
 
 ## Labels
 
@@ -15,6 +24,7 @@ v0.1では、以下19件を登録対象とする。
 | `type:domain`   | 型、ドメインロジック   |
 | `type:storage`  | 永続化                 |
 | `type:bug-risk` | 壊れやすい箇所への対策 |
+| `type:test`     | テスト基盤・テスト追加 |
 | `area:plasmo`   | Plasmo固有             |
 | `area:scan`     | Figma DOM読み取り      |
 | `area:folder`   | 仮想フォルダ           |
@@ -138,15 +148,20 @@ Labels: `type:domain`, `area:scan`, `priority:high`
 作業内容:
 
 - `create-file-id.ts` を作成する
-- Figma URLからfile keyを取得する
-- fallbackとしてURL hashを生成する
+- bridgeが解決したURL（editUrl由来）からfile keyを取得する
+  （対象パスパターンは `docs/architecture/data-model.md` §3）
+- fallbackとして正規化URLのhashを生成する
 - ファイル名だけをIDにしない
+- 戻り値は `CreateFileIdResult`（Result形式）とする
+- unit テストを併置する（Issue 020 完了後に着手）
 
 受け入れ条件:
 
 - Figma file URLから安定したFileIdを取得できる
+- タイトルスラッグ・クエリの変化でIDが変わらない
 - URLから取得できない場合のfallbackが定義されている
 - ID生成処理が1箇所に集約されている
+- 抽出・正規化・fallbackのunit テストが通る
 
 ## Issue 008: スキャン失敗と0件を区別する
 
@@ -156,6 +171,8 @@ Labels: `type:feature`, `type:ui`, `area:scan`, `type:bug-risk`, `priority:high`
 
 - `ScanStatus` を定義する
 - `empty` と `error` を分ける
+- エラーは `OrganizerError` の kind で分類する
+  （`docs/architecture/error-handling.md` 参照）
 - `ErrorBanner` と空状態表示を分ける
 
 受け入れ条件:
@@ -175,6 +192,8 @@ Labels: `type:ui`, `area:plasmo`, `priority:high`
 - `FileList` を作成する
 - `FileListItem` を作成する
 - 取得件数を表示する
+- `role="list"` / `role="listitem"` と選択状態の `aria-selected` を付ける
+  （`docs/architecture/ui-and-components.md` §6）
 
 ## Issue 010: OrganizerState型を定義する
 
@@ -182,7 +201,7 @@ Labels: `type:domain`, `priority:high`
 
 作業内容:
 
-- `PersistentState` を定義する
+- `PersistentState` を定義する（`schemaVersion` と `SCHEMA_VERSION` 定数を含む）
 - `RuntimeState` を定義する
 - `OrganizerSettings` を定義する
 - `StateMeta` を定義する
@@ -195,8 +214,8 @@ Labels: `type:storage`, `area:plasmo`, `priority:high`
 
 - `@plasmohq/storage` を使う
 - `area: "local"` を明示する
-- `load` を実装する
-- `save` を実装する
+- `loadOrMigrate` を実装する（migration適用はIssue 022の基盤を使う）
+- `save` を実装する（Result形式、直列化）
 - `clear` を実装する
 - 初期状態生成処理を実装する
 
@@ -205,6 +224,7 @@ Labels: `type:storage`, `area:plasmo`, `priority:high`
 - 状態を保存できる
 - ページ再読み込み後に復元できる
 - 保存データがない場合は初期状態を返せる
+- 保存失敗が `Result` で呼び出し側へ伝わる
 
 ## Issue 012: 仮想フォルダ型とサービスを実装する
 
@@ -229,6 +249,8 @@ Labels: `type:ui`, `area:folder`, `priority:high`
 - 新規作成ボタンを配置する
 - 展開、折りたたみを実装する
 - 選択中フォルダを表示する
+- `role="tree"` / `role="treeitem"` / `aria-expanded` を付ける
+  （`docs/architecture/ui-and-components.md` §6）
 
 ## Issue 014: フォルダ階層の制約処理を実装する
 
@@ -304,8 +326,97 @@ Labels: `type:ui`, `priority:high`
 - Figma上の実ファイル移動、削除、権限変更を行わないことが表示される
 - 閉じた状態が保存される
 
+## Issue 020: テスト基盤を導入する
+
+Labels: `type:test`, `type:setup`, `priority:high`
+
+作業内容:
+
+- Vitest + jsdom を導入し、`pnpm test` を追加する
+- 既存純関数（`detect-drafts-page`, `extract-file-card-metadata`）の
+  unit テストを追加する
+- `tests/fixtures/` の雛形とサニタイズ手順を用意する
+- CLAUDE.md と README のコマンド一覧を更新する
+
+受け入れ条件:
+
+- `pnpm test` が通る
+- テストが `*.test.ts` として対象モジュールに併置されている
+- `docs/architecture/testing-strategy.md` の運用が始められる状態になる
+
+## Issue 021: Result型とOrganizerErrorを整備する
+
+Labels: `type:domain`, `priority:high`
+
+作業内容:
+
+- `src/utils/result.ts` に `Result` 型と `ok` / `err` ヘルパーを実装する
+- `OrganizerError` と kind コードを定義する
+  （`docs/architecture/error-handling.md` が正本）
+- unit テストを併置する
+
+受け入れ条件:
+
+- `Result` 型が1箇所に定義され、import で共有できる
+- kind コードが error-handling.md の表と一致する
+
+## Issue 022: スキーマ移行基盤を実装する
+
+Labels: `type:storage`, `type:domain`, `type:bug-risk`, `priority:high`
+
+作業内容:
+
+- `SCHEMA_VERSION` と migration チェーン適用処理を実装する
+- 旧バージョン・未知の将来バージョン・破損の3分岐を実装する
+  （`docs/architecture/data-model.md` §10）
+- バックアップキーへの退避処理を実装する
+- 3分岐の unit テストを併置する
+
+受け入れ条件:
+
+- 旧形式データが自動移行され、保存し直される
+- 未知の将来バージョンで上書き保存されない
+- 破損データが退避されてから初期化される
+
+## Issue 023: キーボード操作と基本アクセシビリティを実装する
+
+Labels: `type:ui`, `type:feature`, `priority:high`
+
+作業内容:
+
+- FileList の `↑` / `↓` 選択移動と `Enter` オープンを実装する
+- `Escape` の検索クリアとフォーカス解除を実装する
+- パネル内フォーカス時のみ処理し、Figma本体へ伝播させない
+- パネル・一覧・ツリーの構造ロールを確認・補完する
+
+受け入れ条件:
+
+- `docs/architecture/ui-and-components.md` §7 のv0.1必須キーが動作する
+- パネル外のキー入力に干渉しない
+
+## Issue 024: スキャン失敗テレメトリを実装する
+
+Labels: `type:feature`, `area:scan`, `type:bug-risk`, `priority:high`
+
+作業内容:
+
+- スキャン1回ごとの診断オブジェクト出力を実装する
+  （`docs/architecture/error-handling.md` §5 の書式）
+- skippedCount、URL未解決件数、フォールバック段数を計測する
+
+受け入れ条件:
+
+- console でスキャン診断を確認できる
+- 通常操作でノイズにならない（スキャン1回につき1件）
+
 ## 開発順序
 
+001〜006 は完了済み。残りは基盤（テスト・Result・migration）を
+分類・保存の実装より先に進める。
+
 ```text
-001 → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 011 → 012 → 013 → 014 → 015 → 016 → 017 → 018 → 019
+[完了] 001 → 002 → 003 → 004 → 005 → 006
+[基盤] 020 → 021 → 007 → 008 → 022
+[本体] 010 → 011 → 009 → 012 → 013 → 014 → 015 → 016 → 017 → 018
+[仕上げ] 023 → 024 → 019
 ```

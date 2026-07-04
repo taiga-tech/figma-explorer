@@ -445,3 +445,63 @@
 - `git push -u origin feature/issue-006-extract-file-name-url` でブランチを publish した
 - `gh pr create --draft --base develop --head feature/issue-006-extract-file-name-url` で draft PR `#25` を作成した
 - PR URL は `https://github.com/taiga-tech/figma-explorer/pull/25`、本文先頭には `Closes #5` を入れて Issue と紐づけた
+
+### docs/ 配下の設計書を見直す
+
+#### 仕様
+
+- docs/ 配下の設計書と現在の実装（Issue 006 完了時点）の乖離を洗い出し、事実と異なる記述を更新する
+- v0.1 の設計目標（未実装の OrganizerApp、フォルダ、Storage 等）は設計書として残し、実装済み範囲との区別を明確にする
+
+#### 実施計画
+
+- [x] docs/README.md の「`world: "MAIN"` を使わない」方針を実態に合わせて更新する
+- [x] docs/architecture/plasmo-architecture.md の MAIN world 節をブリッジ構成の説明に書き換える
+- [x] 同ファイルのディレクトリ構成と責務分割を現状＋今後の予定に整理する
+- [x] docs/reference/references.md の entry 配置の記述を src/ 構成に合わせる
+- [x] pnpm format を実行して整形する
+
+#### レビュー
+
+- docs 10 ファイルと `src/` 全実装を突き合わせ、事実と異なる記述は `world: "MAIN"` 方針・ディレクトリ構成・責務分割・Plasmo entry 配置の 4 点だった
+- docs/README.md: 「初期版では `world: "MAIN"` を使わない」を、fiber からの URL 解決に限定して MAIN world bridge を使う現方針に更新した
+- docs/architecture/plasmo-architecture.md: §3 を「MAIN worldの扱い」に書き換え、isolated world から `__reactFiber$` が見えない制約、bridge と isolated の分担、background.ts の動的登録再注入、仮想化リストの再解決を明文化した。§5 を「現状」と「今後追加予定」に分割し、§7 の責務分割に実装/予定の状態列を追加した
+- docs/reference/references.md: entry を root 直下に置くという記述を、実際の src/ 構成（Plasmo の src ディレクトリ構成）に合わせて修正した
+- data-model.md / state-management.md / ui-and-components.md / overview 配下は v0.1 の設計目標として実装と矛盾がないため変更しなかった（実装済みの DraftFile 型は draft-file.ts と一致することを確認済み）
+- `pnpm format` を実行し、整形済みを確認した
+
+### docs/ 設計書を改善版へ全面書き換えする
+
+#### 仕様
+
+- 改善方向は①堅牢性・保守性 ②データ設計強化 ③UX・機能充実の3点（ユーザー承認済みプラン: .claude/plans/compiled-roaming-torvalds.md）
+- docs/ を 10 → 13 ファイルへ再編（scan-pipeline / error-handling / testing-strategy を新規追加）
+- 実装コードは変更しない。型・契約の「正本」ルールと用語統一（schemaVersion 等）を導入する
+
+#### 実施計画
+
+- [x] Phase 1: error-handling.md / data-model.md / scan-pipeline.md / testing-strategy.md（正本の確定）
+- [x] Phase 2: state-management.md / plasmo-architecture.md / ui-and-components.md
+- [x] Phase 3: requirements.md / user-stories.md / scope-and-milestones.md
+- [x] Phase 4: github-issues-v0.1.md / references.md / README.md
+- [x] 検証: pnpm format、内部リンク・実装パス・セレクタ台帳の突合、git diff 確認
+
+#### レビュー
+
+- 承認済みプランどおり docs/ を 10 → 13 ファイルへ再編した。新規は
+  architecture/scan-pipeline.md（二重 world 契約・セレクタ台帳・DOM 耐性戦略の正本）、
+  architecture/error-handling.md（Result 型・OrganizerError・テレメトリの正本）、
+  architecture/testing-strategy.md（Vitest + jsdom、DOM フィクスチャ、smoke 手順）の3本
+- data-model.md に FileId 安定性保証（editUrl 由来 file key 第一候補、URL 正規化、hash fallback）と
+  スキーマ移行（SCHEMA_VERSION、migration チェーン、3分岐）を新設し、stateVersion を schemaVersion へ統一した
+- state-management.md で useSyncExternalStore + 手書きストアを正式採用として明文化し、
+  Zustand 不採用理由と再検討条件、loadOrMigrate() を追記した
+- ui-and-components.md に移行パス（FigmaExplorerPanel → OrganizerPanel の3段階）、
+  a11y 設計、キーボード操作表、状態別表示マトリクス、ErrorBanner と kind の対応表を新設した
+- overview/ は非機能要件の新設、US-013（キーボード操作）・US-014（データ非損失移行）の追加、
+  マイルストーン M2.5（テスト・エラー処理基盤）の挿入と進捗スナップショットを反映した
+- github-issues-v0.1.md にステータス表と Issue 020〜024（テスト基盤、Result 型、migration 基盤、
+  キーボード/a11y、テレメトリ）を追加し、開発順序を基盤先行に再編した
+- README.md に表記ルール（実装/予定ラベル、型定義の正本ファイル表、用語統一）を新設した
+- 検証: pnpm format 済み、内部リンク切れ 0 件、docs 中の src パス参照は「予定」2件を除き実在、
+  セレクタ台帳と src/features/scan の定数が一致、変更ファイルは docs/ と tasks/ のみ
