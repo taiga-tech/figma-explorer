@@ -155,6 +155,7 @@ describe("createOrganizerFoldersStore", () => {
       status: "ready",
       folders: {},
       folderTree: [],
+      assignments: {},
       storageError: null,
       canRetrySave: false
     })
@@ -204,6 +205,81 @@ describe("createOrganizerFoldersStore", () => {
     expect(createdId).toBeDefined()
     expect(snapshot.folderTree).toHaveLength(1)
     expect(persisted.folders[createdId]?.name).toBe("design")
+  })
+
+  it("ファイル分類と未分類化をsnapshotとstorageへ反映する", async () => {
+    const initialState = addFolder(createInitialPersistentState(NOW), {
+      id: "folder-design",
+      name: "Design"
+    })
+    const { backend, store } = await setupReadyStore(initialState)
+
+    store.assignFile("file-1", "folder-design")
+
+    expect(store.getSnapshot().assignments["file-1"]?.folderId).toBe(
+      "folder-design"
+    )
+
+    await store.retrySave()
+
+    let persisted = backend.entries.get(STORAGE_KEY) as PersistentState
+
+    expect(persisted.assignments["file-1"]?.folderId).toBe("folder-design")
+
+    store.assignFile("file-1", null)
+    await store.retrySave()
+    persisted = backend.entries.get(STORAGE_KEY) as PersistentState
+
+    expect(store.getSnapshot().assignments["file-1"]?.folderId).toBeNull()
+    expect(persisted.assignments["file-1"]?.folderId).toBeNull()
+  })
+
+  it("保存済みの分類を読み込み時にsnapshotへ復元する", async () => {
+    const initialState = addFolder(createInitialPersistentState(NOW), {
+      id: "folder-design",
+      name: "Design"
+    })
+    initialState.assignments["file-1"] = {
+      fileId: "file-1",
+      folderId: "folder-design",
+      updatedAt: NOW
+    }
+    const { store } = await setupReadyStore(initialState)
+
+    expect(store.getSnapshot().assignments["file-1"]?.folderId).toBe(
+      "folder-design"
+    )
+  })
+
+  it("分類の保存失敗後もoptimistic stateを保持し再試行できる", async () => {
+    const initialState = addFolder(createInitialPersistentState(NOW), {
+      id: "folder-design",
+      name: "Design"
+    })
+    const { backend, store } = await setupReadyStore(initialState)
+
+    backend.failNextSet()
+    store.assignFile("file-1", "folder-design")
+    await store.retrySave()
+
+    expect(store.getSnapshot().assignments["file-1"]?.folderId).toBe(
+      "folder-design"
+    )
+    expect(
+      (backend.entries.get(STORAGE_KEY) as PersistentState).assignments[
+        "file-1"
+      ]
+    ).toBeUndefined()
+    expect(store.getSnapshot().canRetrySave).toBe(true)
+
+    await store.retrySave()
+
+    expect(
+      (backend.entries.get(STORAGE_KEY) as PersistentState).assignments[
+        "file-1"
+      ]?.folderId
+    ).toBe("folder-design")
+    expect(store.getSnapshot().storageError).toBeNull()
   })
 
   it("load中に外部更新を受けても古い読み込み結果へ巻き戻さない", async () => {

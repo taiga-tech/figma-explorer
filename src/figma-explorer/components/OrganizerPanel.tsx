@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react"
 
 import type { OrganizerErrorKind } from "../../utils/result"
+import { FileAssignmentSection } from "./FileAssignmentSection"
 import { FileList } from "./FileList"
 import { FolderSection } from "./FolderSection"
 import type { OrganizerFileListItem } from "./organizer-panel-types"
@@ -18,6 +19,7 @@ type OrganizerPanelProps = {
     message: string
   } | null
   folderSection: ComponentProps<typeof FolderSection>
+  assignmentSection: ComponentProps<typeof FileAssignmentSection>
   onRescan: () => void
   onSelectFile: (fileId: string) => void
 }
@@ -31,6 +33,7 @@ export function OrganizerPanel({
   emptyMessage,
   errorBanner,
   folderSection,
+  assignmentSection,
   onRescan,
   onSelectFile
 }: OrganizerPanelProps) {
@@ -107,6 +110,8 @@ export function OrganizerPanel({
         </section>
 
         <FolderSection {...folderSection} />
+
+        <FileAssignmentSection {...assignmentSection} />
 
         <section className="figma-explorer-panel__section figma-explorer-panel__section--file-list">
           <div className="figma-explorer-panel__section-heading">

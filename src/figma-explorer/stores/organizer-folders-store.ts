@@ -13,6 +13,7 @@ import {
   applyOrganizerFolderMutation,
   type OrganizerFolderMutation
 } from "../../features/folders/organizer-folder-mutation"
+import type { FileId } from "../../features/scan/create-file-id"
 import {
   getOrganizerStorage,
   type OrganizerStorage
@@ -29,6 +30,7 @@ export type OrganizerFoldersSnapshot = {
   status: OrganizerFoldersStatus
   folders: Record<FolderId, VirtualFolder>
   folderTree: FolderTreeNode[]
+  assignments: PersistentState["assignments"]
   // 読み込み・保存の失敗と、破損データ退避の警告を UI 表示用に載せる
   storageError: OrganizerError | null
   canRetrySave: boolean
@@ -46,6 +48,7 @@ export type OrganizerFoldersStore = {
     input: CreateOrganizerFolderInput
   ) => FolderOperationError | null
   toggleFolderExpanded: (folderId: FolderId) => void
+  assignFile: (fileId: FileId, folderId: FolderId | null) => void
   retrySave: () => Promise<void>
 }
 
@@ -70,6 +73,7 @@ export const createOrganizerFoldersStore = (
     status,
     folders: {},
     folderTree: [],
+    assignments: {},
     storageError: null,
     canRetrySave: false
   }
@@ -102,6 +106,7 @@ export const createOrganizerFoldersStore = (
       status,
       folders: optimisticState?.folders ?? {},
       folderTree: optimisticState?.folderTree ?? [],
+      assignments: optimisticState?.assignments ?? {},
       storageError,
       canRetrySave: saveError !== null && pendingMutations.length > 0
     }
@@ -305,6 +310,24 @@ export const createOrganizerFoldersStore = (
         type: "set_folder_expanded",
         folderId,
         expanded: !node.expanded,
+        updatedAt: new Date().toISOString()
+      })
+    },
+    assignFile: (fileId, folderId) => {
+      const optimisticState = deriveOptimisticState()
+
+      if (!optimisticState) {
+        return
+      }
+
+      if (folderId !== null && !optimisticState.folders[folderId]) {
+        return
+      }
+
+      enqueueMutation({
+        type: "set_file_assignment",
+        fileId,
+        folderId,
         updatedAt: new Date().toISOString()
       })
     },

@@ -318,6 +318,56 @@
   cursor: default;
 }
 
+.figma-explorer-panel__assignment {
+  display: grid;
+  gap: 10px;
+}
+
+.figma-explorer-panel__assignment-summary {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  color: #5b6b84;
+  font-size: 12px;
+}
+
+.figma-explorer-panel__assignment-summary strong {
+  overflow: hidden;
+  color: #132238;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.figma-explorer-panel__assignment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.figma-explorer-panel__assignment-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #132238;
+  border-radius: 999px;
+  background: #132238;
+  color: #f8fbff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.figma-explorer-panel__assignment-button--secondary {
+  border-color: rgba(19, 34, 56, 0.2);
+  background: transparent;
+  color: #132238;
+}
+
+.figma-explorer-panel__assignment-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .figma-explorer-panel__folder-alert {
   margin: 0;
   padding: 8px 10px;

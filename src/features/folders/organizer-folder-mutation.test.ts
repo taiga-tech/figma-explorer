@@ -156,4 +156,27 @@ describe("applyOrganizerFolderMutation", () => {
       }
     }
   })
+
+  it("分類mutationを同じ目標へ再適用しても冪等である", () => {
+    const state = createFolderOrThrow(
+      createInitialPersistentState(NOW),
+      "design",
+      "folder-design"
+    )
+    const mutation: OrganizerFolderMutation = {
+      type: "set_file_assignment",
+      fileId: "file-1",
+      folderId: "folder-design",
+      updatedAt: LATER
+    }
+    const first = applyOrganizerFolderMutation(state, mutation)
+
+    expect(first.ok).toBe(true)
+
+    if (first.ok) {
+      const second = applyOrganizerFolderMutation(first.value, mutation)
+
+      expect(second).toEqual({ ok: true, value: first.value })
+    }
+  })
 })
