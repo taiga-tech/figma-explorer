@@ -35,6 +35,7 @@ describe("OrganizerPanel", () => {
   it("renders summary counts and scan metadata", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
+        activeFilter: { type: "all" },
         assignmentSection: emptyAssignmentSection,
         emptyMessage: null,
         errorBanner: null,
@@ -47,12 +48,15 @@ describe("OrganizerPanel", () => {
             folderName: null
           }
         ],
+        onChangeFilter: () => undefined,
         onRescan: () => undefined,
         onSelectFile: () => undefined,
         routeLabel: "/drafts",
         scanSummary: "1 files extracted / 0 skipped",
         selectedFileId: "file-1",
-        targetLabel: "https://www.figma.com/*"
+        targetLabel: "https://www.figma.com/*",
+        totalCount: 1,
+        uncategorizedCount: 1
       })
     )
 
@@ -66,6 +70,7 @@ describe("OrganizerPanel", () => {
   it("renders an alert banner for scan errors", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
+        activeFilter: { type: "all" },
         assignmentSection: emptyAssignmentSection,
         emptyMessage: "候補カードが見つかりません。",
         folderSection: emptyFolderSection,
@@ -74,12 +79,15 @@ describe("OrganizerPanel", () => {
           message: "File card list root was not found."
         },
         files: [],
+        onChangeFilter: () => undefined,
         onRescan: () => undefined,
         onSelectFile: () => undefined,
         routeLabel: "/drafts",
         scanSummary: "scan_dom_missing",
         selectedFileId: null,
-        targetLabel: "https://www.figma.com/*"
+        targetLabel: "https://www.figma.com/*",
+        totalCount: 0,
+        uncategorizedCount: 0
       })
     )
 
@@ -90,6 +98,7 @@ describe("OrganizerPanel", () => {
   it("renders a retry action for an unsaved folder change", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
+        activeFilter: { type: "all" },
         assignmentSection: emptyAssignmentSection,
         emptyMessage: null,
         errorBanner: null,
@@ -99,12 +108,15 @@ describe("OrganizerPanel", () => {
           canRetrySave: true
         },
         files: [],
+        onChangeFilter: () => undefined,
         onRescan: () => undefined,
         onSelectFile: () => undefined,
         routeLabel: "/drafts",
         scanSummary: "0 files extracted / 0 skipped",
         selectedFileId: null,
-        targetLabel: "https://www.figma.com/*"
+        targetLabel: "https://www.figma.com/*",
+        totalCount: 0,
+        uncategorizedCount: 0
       })
     )
 

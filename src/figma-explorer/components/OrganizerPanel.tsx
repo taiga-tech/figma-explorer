@@ -1,17 +1,22 @@
 import type { ComponentProps } from "react"
 
+import type { ActiveFilter } from "../../domain/organizer-state"
 import type { OrganizerErrorKind } from "../../utils/result"
 import { FileAssignmentSection } from "./FileAssignmentSection"
 import { FileList } from "./FileList"
 import { FolderSection } from "./FolderSection"
 import type { OrganizerFileListItem } from "./organizer-panel-types"
 import { PanelHeader } from "./PanelHeader"
+import { SummaryCards } from "./SummaryCards"
 
 type OrganizerPanelProps = {
   targetLabel: string
   routeLabel: string
   scanSummary: string
   files: OrganizerFileListItem[]
+  totalCount: number
+  uncategorizedCount: number | null
+  activeFilter: ActiveFilter
   selectedFileId: string | null
   emptyMessage: string | null
   errorBanner: {
@@ -22,6 +27,7 @@ type OrganizerPanelProps = {
   assignmentSection: ComponentProps<typeof FileAssignmentSection>
   onRescan: () => void
   onSelectFile: (fileId: string) => void
+  onChangeFilter: (filter: ActiveFilter) => void
 }
 
 export function OrganizerPanel({
@@ -29,16 +35,18 @@ export function OrganizerPanel({
   routeLabel,
   scanSummary,
   files,
+  totalCount,
+  uncategorizedCount,
+  activeFilter,
   selectedFileId,
   emptyMessage,
   errorBanner,
   folderSection,
   assignmentSection,
   onRescan,
-  onSelectFile
+  onSelectFile,
+  onChangeFilter
 }: OrganizerPanelProps) {
-  const uncategorizedCount = files.filter((file) => !file.folderName).length
-
   return (
     <div className="figma-explorer-shell">
       <aside
@@ -88,26 +96,13 @@ export function OrganizerPanel({
           </dl>
         </section>
 
-        <section className="figma-explorer-panel__summary-grid">
-          <article className="figma-explorer-panel__summary-card">
-            <p className="figma-explorer-panel__summary-label">全件</p>
-            <p className="figma-explorer-panel__summary-value">
-              {files.length}
-            </p>
-          </article>
-          <article className="figma-explorer-panel__summary-card">
-            <p className="figma-explorer-panel__summary-label">未分類</p>
-            <p className="figma-explorer-panel__summary-value">
-              {uncategorizedCount}
-            </p>
-          </article>
-          <article className="figma-explorer-panel__summary-card">
-            <p className="figma-explorer-panel__summary-label">表示中</p>
-            <p className="figma-explorer-panel__summary-value">
-              {files.length}
-            </p>
-          </article>
-        </section>
+        <SummaryCards
+          activeFilter={activeFilter}
+          onChangeFilter={onChangeFilter}
+          totalCount={totalCount}
+          uncategorizedCount={uncategorizedCount}
+          visibleCount={files.length}
+        />
 
         <FolderSection {...folderSection} />
 

@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react"
 
 import type { FolderId } from "../../domain/folder"
+import type { ActiveFilter } from "../../domain/organizer-state"
+import {
+  countUncategorizedFiles,
+  filterFiles
+} from "../../features/filters/file-filter-service"
 import { createFileId } from "../../features/scan/create-file-id"
 import { toOrganizerScanError } from "../../features/scan/detect-file-card-elements"
 import { extractFileCardMetadata } from "../../features/scan/extract-file-card-metadata"
@@ -33,6 +38,9 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
   const fileCardDetectionResult = useFileCardDetection()
   const organizerFolders = useOrganizerFolders()
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>({
+    type: "all"
+  })
   const [selectedFolderId, setSelectedFolderId] = useState<FolderId | null>(
     null
   )
@@ -81,10 +89,24 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
       }
     }) ?? []
 
+  const assignmentsReady = organizerFolders.status === "ready"
+  const uncategorizedCount = assignmentsReady
+    ? countUncategorizedFiles(organizerFiles, organizerFolders.assignments)
+    : null
+  const displayedFilter: ActiveFilter = assignmentsReady
+    ? activeFilter
+    : { type: "all" }
+  const visibleFiles = filterFiles(
+    organizerFiles,
+    organizerFolders.assignments,
+    displayedFilter
+  )
+  const displayedFiles = assignmentsReady ? visibleFiles : []
+
   const resolvedSelectedFileId =
-    selectedFileId && organizerFiles.some((file) => file.id === selectedFileId)
+    selectedFileId && displayedFiles.some((file) => file.id === selectedFileId)
       ? selectedFileId
-      : organizerFiles[0]?.id ?? null
+      : displayedFiles[0]?.id ?? null
 
   const emptyMessage = useMemo(() => {
     if (
@@ -119,15 +141,36 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
     ? STORAGE_ERROR_MESSAGES[organizerFolders.storageError.kind] ??
       organizerFolders.storageError.message
     : null
-  const selectedFile = organizerFiles.find(
+  const selectedFile = displayedFiles.find(
     (file) => file.id === resolvedSelectedFileId
   )
   const selectedFolder = resolvedSelectedFolderId
     ? organizerFolders.folders[resolvedSelectedFolderId]
     : null
+  const fileListEmptyMessage = (() => {
+    if (organizerFolders.status === "loading" && organizerFiles.length > 0) {
+      return "分類情報を読み込んでいます…"
+    }
+
+    if (organizerFolders.status === "error" && organizerFiles.length > 0) {
+      return "分類情報を読み込めないため、ファイル一覧を表示できません。"
+    }
+
+    if (
+      fileCardDetectionResult.status === "success" &&
+      displayedFilter.type === "uncategorized" &&
+      displayedFiles.length === 0 &&
+      emptyMessage === null
+    ) {
+      return "未分類のファイルはありません。"
+    }
+
+    return emptyMessage
+  })()
 
   return (
     <OrganizerPanel
+      activeFilter={displayedFilter}
       assignmentSection={{
         selectedFileName: selectedFile?.name ?? null,
         selectedFolderName: selectedFolder?.name ?? null,
@@ -154,7 +197,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
           }
         }
       }}
-      emptyMessage={emptyMessage}
+      emptyMessage={fileListEmptyMessage}
       errorBanner={
         scanError
           ? {
@@ -163,7 +206,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
             }
           : null
       }
-      files={organizerFiles}
+      files={displayedFiles}
       folderSection={{
         status: organizerFolders.status,
         folders: organizerFolders.folders,
@@ -187,11 +230,14 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
         }
       }}
       onRescan={rescanFileCards}
+      onChangeFilter={setActiveFilter}
       onSelectFile={setSelectedFileId}
       routeLabel={formatHrefPathname(href)}
       scanSummary={scanSummary}
       selectedFileId={resolvedSelectedFileId}
       targetLabel={FIGMA_MATCHES.join(", ")}
+      totalCount={organizerFiles.length}
+      uncategorizedCount={uncategorizedCount}
     />
   )
 }

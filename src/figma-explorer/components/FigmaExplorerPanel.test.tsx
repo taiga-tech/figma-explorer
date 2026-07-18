@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
     totalCount: 0
   },
   organizerFolders: {
-    status: "loading" as "loading" | "ready",
+    status: "loading" as "loading" | "ready" | "error",
     folders: {},
     folderTree: [],
     assignments: {},
@@ -77,7 +77,7 @@ describe("FigmaExplorerPanel", () => {
     expect(html).toContain("まだ候補カードが見つかっていません。")
   })
 
-  it("保存済み所属名を表示し選択フォルダへ分類する", () => {
+  it("分類情報の読み込み中は未分類filterを無効にする", () => {
     mocks.detectionResult = { status: "success", elements: [] }
     mocks.extractedFiles = {
       files: [
@@ -88,6 +88,107 @@ describe("FigmaExplorerPanel", () => {
       ],
       skippedCount: 0,
       totalCount: 1
+    }
+    const html = renderToStaticMarkup(
+      <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+    )
+
+    document.body.innerHTML = html
+    const uncategorizedButton = Array.from(
+      document.querySelectorAll("button")
+    ).find((button) => button.textContent?.includes("未分類"))
+
+    expect(html).not.toContain("Dashboard")
+    expect(html).toContain("分類情報を読み込んでいます…")
+    expect(uncategorizedButton?.disabled).toBe(true)
+    expect(uncategorizedButton?.textContent).toContain("-")
+  })
+
+  it("分類情報の読み込み失敗を進行中表示にしない", () => {
+    mocks.detectionResult = { status: "success", elements: [] }
+    mocks.extractedFiles = {
+      files: [
+        {
+          name: "Dashboard",
+          url: "https://www.figma.com/file/AbC123/Dashboard"
+        }
+      ],
+      skippedCount: 0,
+      totalCount: 1
+    }
+    mocks.organizerFolders = {
+      status: "error",
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      storageError: {
+        kind: "storage_load_failed",
+        message: "Failed to load organizer state."
+      },
+      canRetrySave: false
+    }
+    const html = renderToStaticMarkup(
+      <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+    )
+
+    expect(html).toContain(
+      "分類情報を読み込めないため、ファイル一覧を表示できません。"
+    )
+    expect(html).not.toContain("分類情報を読み込んでいます…")
+    expect(html).not.toContain("Dashboard")
+  })
+
+  it("抽出失敗のempty messageを未分類filterでも維持する", () => {
+    mocks.detectionResult = { status: "success", elements: [] }
+    mocks.extractedFiles = { files: [], skippedCount: 1, totalCount: 1 }
+    mocks.organizerFolders = {
+      status: "ready",
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      storageError: null,
+      canRetrySave: false
+    }
+    const container = document.createElement("div")
+    const root = createRoot(container)
+
+    act(() => {
+      root.render(
+        <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+      )
+    })
+
+    const uncategorizedButton = Array.from(
+      container.querySelectorAll("button")
+    ).find((button) => button.textContent?.includes("未分類0"))
+
+    act(() => uncategorizedButton?.click())
+
+    expect(container.textContent).toContain(
+      "候補カードは見つかりましたが、名前または URL を抽出できませんでした。"
+    )
+    expect(container.textContent).not.toContain(
+      "未分類のファイルはありません。"
+    )
+
+    act(() => root.unmount())
+  })
+
+  it("未分類だけを表示し分類後に一覧から除外する", () => {
+    mocks.detectionResult = { status: "success", elements: [] }
+    mocks.extractedFiles = {
+      files: [
+        {
+          name: "Dashboard",
+          url: "https://www.figma.com/file/AbC123/Dashboard"
+        },
+        {
+          name: "Landing",
+          url: "https://www.figma.com/file/XyZ987/Landing"
+        }
+      ],
+      skippedCount: 0,
+      totalCount: 2
     }
     mocks.organizerFolders = {
       status: "ready",
@@ -125,7 +226,18 @@ describe("FigmaExplorerPanel", () => {
     })
 
     expect(container.textContent).toContain("Dashboard")
+    expect(container.textContent).toContain("Landing")
     expect(container.textContent).toContain("現在: Design")
+
+    const uncategorizedButton = Array.from(
+      container.querySelectorAll("button")
+    ).find((button) => button.textContent?.includes("未分類1"))
+
+    act(() => uncategorizedButton?.click())
+
+    expect(container.textContent).not.toContain("Dashboard")
+    expect(container.textContent).toContain("Landing")
+    expect(container.textContent).toContain("現在: 未分類")
 
     const folderButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Design"
@@ -139,7 +251,37 @@ describe("FigmaExplorerPanel", () => {
 
     act(() => assignButton?.click())
 
-    expect(mocks.assignFile).toHaveBeenCalledWith("AbC123", "folder-design")
+    expect(mocks.assignFile).toHaveBeenCalledWith("XyZ987", "folder-design")
+
+    mocks.organizerFolders = {
+      ...mocks.organizerFolders,
+      assignments: {
+        ...(mocks.organizerFolders.assignments as Record<string, unknown>),
+        XyZ987: {
+          fileId: "XyZ987",
+          folderId: "folder-design",
+          updatedAt: "2026-07-19T01:00:00.000Z"
+        }
+      }
+    }
+
+    act(() => {
+      root.render(
+        <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+      )
+    })
+
+    expect(container.textContent).toContain("未分類のファイルはありません。")
+    expect(container.textContent).not.toContain("Landing")
+
+    const allButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("全件2")
+    )
+
+    act(() => allButton?.click())
+
+    expect(container.textContent).toContain("Dashboard")
+    expect(container.textContent).toContain("Landing")
 
     const unassignButton = Array.from(
       container.querySelectorAll("button")
@@ -148,6 +290,33 @@ describe("FigmaExplorerPanel", () => {
     act(() => unassignButton?.click())
 
     expect(mocks.assignFile).toHaveBeenCalledWith("AbC123", null)
+
+    mocks.organizerFolders = {
+      ...mocks.organizerFolders,
+      assignments: {
+        ...(mocks.organizerFolders.assignments as Record<string, unknown>),
+        AbC123: {
+          fileId: "AbC123",
+          folderId: null,
+          updatedAt: "2026-07-19T02:00:00.000Z"
+        }
+      }
+    }
+
+    act(() => {
+      root.render(
+        <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+      )
+    })
+
+    const uncategorizedAgainButton = Array.from(
+      container.querySelectorAll("button")
+    ).find((button) => button.textContent?.includes("未分類1"))
+
+    act(() => uncategorizedAgainButton?.click())
+
+    expect(container.textContent).toContain("Dashboard")
+    expect(container.textContent).not.toContain("Landing")
 
     act(() => root.unmount())
   })

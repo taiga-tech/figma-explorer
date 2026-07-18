@@ -56,3 +56,4 @@
 - 最新 state へ適用できない mutation は再試行可能な保存失敗と区別し、最新 state を呼び出し元へ返して競合操作だけを除外する。後続の独立 mutation は止めずに保存を継続する
 - `useMemo` の callback 内を status で分岐しても dependency 配列は毎レンダー無条件に評価される。nullable な派生値は dependency 側でも optional chaining し、external store の初期 `empty` / `error` snapshot をコンポーネントテストで実際にレンダーして確認する
 - mise の総合検証 task で lint・型チェック・テスト・ビルドをまとめるときは、`depends` の並列実行で1件の失敗時に他 task までキャンセルされないよう、各 task を順番に呼び出して失敗箇所と完了済み工程を明確にする
+- ユーザーが `git flow feature finish` と明示した場合は、別の cleanup コマンドへ置き換えず、状態確認後に指定された `git flow feature finish` を実行する

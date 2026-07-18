@@ -6,13 +6,15 @@
 `src/figma-explorer/components/FigmaExplorerPanel.tsx` をコンテナ、
 `OrganizerPanel` を表示層として、検出・抽出結果の一覧とフォルダツリー・作成 UI
 に加え、保存済み分類情報の合成と分類・未分類化 UI まで提供している。
-検索・フィルター・JSON 出力を統合する `OrganizerApp` は次段階で追加する。
+全件／未分類フィルターも `SummaryCards` から切り替えられる。検索・JSON 出力を
+統合する `OrganizerApp` は次段階で追加する。
 
 | 段階 | 内容                                                          | 状態   |
 | ---- | ------------------------------------------------------------- | ------ |
 | 1    | `OrganizerPanel` とフォルダ UI を FigmaExplorerPanel から接続 | 完了   |
 | 2    | FigmaExplorerPanel で Storage と DraftFile の分類情報を合成   | 完了   |
-| 3    | `OrganizerApp` へ検索・フィルター・JSON 出力を統合            | 未実装 |
+| 3    | SummaryCards から全件／未分類フィルターを切り替え             | 完了   |
+| 4    | `OrganizerApp` へ検索・JSON 出力を統合                        | 未実装 |
 
 ## 2. 画面構成
 
@@ -69,6 +71,7 @@ contents/figma-explorer.tsx
 └─ FigmaExplorerPanel
    └─ OrganizerPanel
       ├─ PanelHeader
+      ├─ SummaryCards
       ├─ FolderSection
       │  └─ FolderTree
       │     └─ FolderTreeItem
@@ -115,13 +118,13 @@ v0.1 では FileList の `↑↓` / `Enter` と `Escape` を必須とし、
 「0件は空状態、構造欠落はエラー」の原則
 （[error-handling.md](./error-handling.md)）を UI 仕様に落とす。
 
-| コンポーネント | loading         | empty                            | error                          | success    |
-| -------------- | --------------- | -------------------------------- | ------------------------------ | ---------- |
-| FileList       | スケルトン表示  | 「表示中のファイルがありません」 | ErrorBanner に委譲             | 一覧表示   |
-| FolderTree     | —               | システムフォルダのみ表示         | —                              | ツリー表示 |
-| SummaryCards   | 件数を `-` 表示 | 全件 0 を表示                    | 非表示                         | 件数表示   |
-| SearchBox      | 入力可          | 入力可（結果 0 件表示）          | 入力不可                       | 入力可     |
-| ErrorBanner    | —               | 表示しない（空状態は別扱い）     | kind 対応文言 + 再スキャン導線 | 表示しない |
+| コンポーネント | loading                       | empty                            | error                          | success    |
+| -------------- | ----------------------------- | -------------------------------- | ------------------------------ | ---------- |
+| FileList       | 分類情報の読み込み表示        | 「表示中のファイルがありません」 | 分類情報の読み込み失敗を表示   | 一覧表示   |
+| FolderTree     | —                             | システムフォルダのみ表示         | —                              | ツリー表示 |
+| SummaryCards   | 未分類件数を `-`、filter 無効 | 全件 0 を表示                    | 全件数、未分類 `-`、表示中 0   | 件数表示   |
+| SearchBox      | 入力可                        | 入力可（結果 0 件表示）          | 入力不可                       | 入力可     |
+| ErrorBanner    | —                             | 表示しない（空状態は別扱い）     | kind 対応文言 + 再スキャン導線 | 表示しない |
 
 ## 9. OrganizerApp
 
