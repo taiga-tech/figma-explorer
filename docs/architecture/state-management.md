@@ -121,7 +121,7 @@ export const organizerStorage = {
   `figma-explorer:organizer-state` で複数タブを直列化する
 - popup / background など別 origin の書き込み元を追加する場合は、この前提を
   保てないため background の単一 coordinator へ更新境界を移してから追加する
-- `OrganizerFoldersStore` は未保存 mutation を保持して optimistic state を表示し、
+- `OrganizerFoldersStore` はフォルダと分類の未保存 mutation を保持して optimistic state を表示し、
   `watch` で届いた外部 state へ再適用する。保存失敗時は明示的な再試行を出し、
   成功後に `storage_save_failed` を解除する
 - `clear` によるキー削除も `watch` では空の初期状態として通知し、購読中ストアに
@@ -168,8 +168,8 @@ ViewModelを生成
 画面表示を更新
 ```
 
-現行実装では「検出→抽出→表示」までを
-`file-card-detection-store.ts` と `FigmaExplorerPanel` が担う。
+現行実装では「検出→抽出→分類情報との合成→表示」までを
+`file-card-detection-store.ts`、`OrganizerFoldersStore`、`FigmaExplorerPanel` が担う。
 OrganizerApp 統合後（予定）は、合成以降を `organizer-reducer.ts` に移す。
 
 ## 8. 分類の流れ
@@ -181,7 +181,8 @@ OrganizerApp 統合後（予定）は、合成以降を `organizer-reducer.ts` �
 ↓
 assignments[fileId].folderId を更新
 ↓
-PersistentStateを保存（Result を確認し、失敗時は ErrorBanner）
+OrganizerFoldersStore の mutation queue から PersistentState を保存
+（失敗時は再試行操作を表示）
 ↓
 表示用ViewModelを再計算
 ```

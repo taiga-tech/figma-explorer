@@ -5,13 +5,14 @@
 現行実装は
 `src/figma-explorer/components/FigmaExplorerPanel.tsx` をコンテナ、
 `OrganizerPanel` を表示層として、検出・抽出結果の一覧とフォルダツリー・作成 UI
-まで提供している。分類・検索・JSON 出力を統合する `OrganizerApp` は次段階で追加する。
+に加え、保存済み分類情報の合成と分類・未分類化 UI まで提供している。
+検索・フィルター・JSON 出力を統合する `OrganizerApp` は次段階で追加する。
 
 | 段階 | 内容                                                          | 状態   |
 | ---- | ------------------------------------------------------------- | ------ |
 | 1    | `OrganizerPanel` とフォルダ UI を FigmaExplorerPanel から接続 | 完了   |
-| 2    | `OrganizerApp` で Storage と DraftFile の分類情報を合成       | 未実装 |
-| 3    | 検索・フィルター・JSON 出力を統合                             | 未実装 |
+| 2    | FigmaExplorerPanel で Storage と DraftFile の分類情報を合成   | 完了   |
+| 3    | `OrganizerApp` へ検索・フィルター・JSON 出力を統合            | 未実装 |
 
 ## 2. 画面構成
 
@@ -30,6 +31,7 @@ Figma Drafts画面上に右側固定の整理パネルを表示する。
 |                                      | Search             | |
 |                                      | Summary            | |
 |                                      | Folders            | |
+|                                      | Classification     | |
 |                                      | File List          | |
 |                                      | JSON Export        | |
 |                                      +--------------------+ |
@@ -64,19 +66,15 @@ Figma Drafts画面上に右側固定の整理パネルを表示する。
 
 ```text
 contents/figma-explorer.tsx
-└─ OrganizerApp
-   ├─ FirstRunNotice
-   ├─ OrganizerPanel
-   │  ├─ PanelHeader
-   │  ├─ SearchBox
-   │  ├─ SummaryCards
-   │  ├─ FolderTree
-   │  │  └─ FolderTreeItem
-   │  ├─ FileList
-   │  │  └─ FileListItem
-   │  └─ PanelFooter
-   ├─ ExportJsonDialog
-   └─ ErrorBanner
+└─ FigmaExplorerPanel
+   └─ OrganizerPanel
+      ├─ PanelHeader
+      ├─ FolderSection
+      │  └─ FolderTree
+      │     └─ FolderTreeItem
+      ├─ FileAssignmentSection
+      └─ FileList
+         └─ FileListItem
 ```
 
 ## 6. アクセシビリティ設計
@@ -214,7 +212,22 @@ Drafts
 | 名前変更           | フォルダ名を変更                 |
 | 削除               | フォルダを削除                   |
 
-## 15. FileList
+## 15. FileAssignmentSection
+
+表示項目:
+
+- 選択中ファイル名
+- 現在の所属フォルダ名
+- 選択中の分類先フォルダ名
+
+操作:
+
+| 操作         | 結果                                     |
+| ------------ | ---------------------------------------- |
+| フォルダ分類 | 選択ファイルを選択フォルダへ分類する     |
+| 未分類に戻す | 選択ファイルの `folderId` を null にする |
+
+## 16. FileList
 
 表示項目:
 
@@ -226,14 +239,12 @@ URLを開く操作
 
 操作:
 
-| 操作           | 結果                         |
-| -------------- | ---------------------------- |
-| クリック       | 選択                         |
-| ダブルクリック | Figmaファイルを開く          |
-| フォルダ選択   | 対象ファイルをフォルダへ分類 |
-| 未分類に戻す   | folderIdをnullにする         |
+| 操作     | 結果                |
+| -------- | ------------------- |
+| クリック | 選択                |
+| 開く     | Figmaファイルを開く |
 
-## 16. FirstRunNotice
+## 17. FirstRunNotice
 
 表示内容:
 
@@ -243,7 +254,7 @@ Figma上のファイル移動、削除、権限変更は行いません。
 分類情報はこのブラウザのローカル保存領域に保存されます。
 ```
 
-## 17. ErrorBanner
+## 18. ErrorBanner
 
 エラー分類（[error-handling.md](./error-handling.md) §3 の kind）と
 表示の対応:
@@ -261,7 +272,7 @@ Figma上のファイル移動、削除、権限変更は行いません。
 
 取得0件はエラーではなく、空状態として扱う（§8）。
 
-## 18. 関連文書
+## 19. 関連文書
 
 - [error-handling.md](./error-handling.md) — エラー分類・表示原則の正本
 - [state-management.md](./state-management.md) — ストアと ViewModel

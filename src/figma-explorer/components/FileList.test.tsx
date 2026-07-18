@@ -37,6 +37,8 @@ describe("FileList", () => {
     expect(items).toHaveLength(2)
     expect(items[0]?.getAttribute("aria-selected")).toBe("false")
     expect(items[1]?.getAttribute("aria-selected")).toBe("true")
+    expect(items[0]?.textContent).toContain("未分類")
+    expect(items[1]?.textContent).toContain("案件A")
   })
 
   it("renders empty message when there are no files", () => {

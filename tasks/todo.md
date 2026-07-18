@@ -892,3 +892,42 @@
   `git diff --check` 成功。テストは16ファイル・122件、Plasmo production build も成功した
 - Plasmo build はサンドボックス内では `Operation not permitted` になったため、同じ
   `mise run check` を承認済みのサンドボックス外実行で再確認した
+
+## Issue 015: ファイルを仮想フォルダへ分類する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 015（GitHub #19）を実装対象とする
+- `FileAssignment` は Issue 010 で `src/domain/organizer-state.ts` に定義済みのため流用する
+- ファイルを選択中の仮想フォルダへ分類し、未分類へ戻せる純粋なサービス処理を追加する
+- 分類操作は既存の organizer storage 更新境界を使い、複数タブ間の競合防止と保存失敗時の再試行を維持する
+- ファイル一覧に保存済みの所属フォルダ名を表示し、選択中ファイルに対する分類操作 UI を追加する
+
+### 実施計画
+
+- [x] `git flow feature start issue-015-file-assignment` でブランチを作成する
+- [x] 分類・未分類化を行う Result 形式の純粋なサービスと unit テストを追加する
+- [x] organizer folders store の永続 mutation と snapshot を assignments へ拡張する
+- [x] 選択中ファイルの分類操作 UI と所属フォルダ名表示を実装する
+- [x] component / store の回帰テストを追加する
+- [x] `mise run check`、`git diff --check`、React Doctor で検証する
+- [x] レビューと必要な教訓を追記する
+
+### レビュー
+
+- `FileAssignment` を流用した純粋な分類・未分類化サービスと、固定時刻・目標
+  `folderId` を持つ冪等 mutation を追加した。古い再試行は新しい分類を上書きせず、
+  存在しないフォルダへの分類は競合として既存 queue から安全に除外される
+- organizer folders store の optimistic snapshot と永続更新境界へ assignments を統合し、
+  保存失敗時の再試行・watch による外部 state への rebase をそのまま維持した
+- 保存済み assignment と検出ファイルを FileId で合成して所属フォルダ名を表示し、
+  選択ファイルを選択フォルダへ分類／未分類へ戻す明示操作を追加した
+- 独立レビューで blocker / high finding はなし。loading 中の未分類化を禁止し、現在の
+  分類状態を `aria-live` で通知する低 severity 指摘も反映した
+- PR 前レビューで検出した `ui-and-components.md` の現状説明 drift を修正し、
+  分類情報の合成完了と `FileAssignmentSection` の構成を正本へ反映した
+- `mise run check`（lint、typecheck、18ファイル・133テスト、production build）、
+  `git diff --check` が成功。React Doctor は 100/100（React 19 向けの test-only
+  `act` 警告1件。現行 React 18 の型と既存テスト規約に合わせて変更なし）
+- Plasmo build はサンドボックス内では `Operation not permitted` になったため、同じ
+  `mise run check` を承認済みのサンドボックス外実行で再確認した

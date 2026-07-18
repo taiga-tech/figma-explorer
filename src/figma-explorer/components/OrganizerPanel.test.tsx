@@ -19,10 +19,23 @@ const emptyFolderSection: ComponentProps<
   onRetrySave: () => undefined
 }
 
+const emptyAssignmentSection: ComponentProps<
+  typeof OrganizerPanel
+>["assignmentSection"] = {
+  selectedFileName: null,
+  selectedFolderName: null,
+  currentFolderName: null,
+  canAssign: false,
+  canUnassign: false,
+  onAssign: () => undefined,
+  onUnassign: () => undefined
+}
+
 describe("OrganizerPanel", () => {
   it("renders summary counts and scan metadata", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
+        assignmentSection: emptyAssignmentSection,
         emptyMessage: null,
         errorBanner: null,
         folderSection: emptyFolderSection,
@@ -53,6 +66,7 @@ describe("OrganizerPanel", () => {
   it("renders an alert banner for scan errors", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
+        assignmentSection: emptyAssignmentSection,
         emptyMessage: "候補カードが見つかりません。",
         folderSection: emptyFolderSection,
         errorBanner: {
@@ -76,6 +90,7 @@ describe("OrganizerPanel", () => {
   it("renders a retry action for an unsaved folder change", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
+        assignmentSection: emptyAssignmentSection,
         emptyMessage: null,
         errorBanner: null,
         folderSection: {

@@ -95,6 +95,7 @@ figma-explorer/
 │  │  │  └─ annotate-file-card-routes.ts
 │  │  └─ folders/
 │  │     ├─ folder-service.ts            # 作成・改名・移動・削除 + 階層制約
+│  │     ├─ file-assignment-service.ts    # ファイル分類・未分類化
 │  │     ├─ folder-tree-service.ts       # folderTree の純関数ヘルパー
 │  │     └─ organizer-folder-mutation.ts # 再試行可能な永続化操作
 │  ├─ storage/

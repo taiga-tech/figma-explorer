@@ -19,10 +19,10 @@ type FigmaExplorerPanelProps = {
 }
 
 const STORAGE_ERROR_MESSAGES: Partial<Record<OrganizerErrorKind, string>> = {
-  storage_load_failed: "保存済みフォルダの読み込みに失敗しました。",
-  storage_save_failed: "フォルダの保存に失敗しました。",
+  storage_load_failed: "保存済みの整理状態の読み込みに失敗しました。",
+  storage_save_failed: "整理状態の保存に失敗しました。",
   storage_update_conflict:
-    "別のタブで状態が変わったため、フォルダ操作を反映できませんでした。",
+    "別のタブで状態が変わったため、整理操作を反映できませんでした。",
   storage_migration_failed:
     "保存データのバージョンを現在の拡張機能で処理できません。",
   storage_corrupted:
@@ -65,14 +65,19 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
   const organizerFiles: OrganizerFileListItem[] =
     extractedFileCards?.files.map((file, index) => {
       const fileIdResult = createFileId(file.url)
+      const fileId = fileIdResult.ok
+        ? fileIdResult.value.fileId
+        : `${file.url}-${index}`
+      const folderId = organizerFolders.assignments[fileId]?.folderId ?? null
 
       return {
-        id: fileIdResult.ok
-          ? fileIdResult.value.fileId
-          : `${file.url}-${index}`,
+        id: fileId,
         name: file.name,
         url: file.url,
-        folderName: null
+        folderName:
+          folderId === null
+            ? null
+            : organizerFolders.folders[folderId]?.name ?? null
       }
     }) ?? []
 
@@ -114,9 +119,41 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
     ? STORAGE_ERROR_MESSAGES[organizerFolders.storageError.kind] ??
       organizerFolders.storageError.message
     : null
+  const selectedFile = organizerFiles.find(
+    (file) => file.id === resolvedSelectedFileId
+  )
+  const selectedFolder = resolvedSelectedFolderId
+    ? organizerFolders.folders[resolvedSelectedFolderId]
+    : null
 
   return (
     <OrganizerPanel
+      assignmentSection={{
+        selectedFileName: selectedFile?.name ?? null,
+        selectedFolderName: selectedFolder?.name ?? null,
+        currentFolderName: selectedFile?.folderName ?? null,
+        canAssign:
+          organizerFolders.status === "ready" &&
+          selectedFile !== undefined &&
+          selectedFolder !== null,
+        canUnassign:
+          organizerFolders.status === "ready" &&
+          selectedFile !== undefined &&
+          selectedFile.folderName !== null,
+        onAssign: () => {
+          if (selectedFile && selectedFolder) {
+            getOrganizerFoldersStore().assignFile(
+              selectedFile.id,
+              selectedFolder.id
+            )
+          }
+        },
+        onUnassign: () => {
+          if (organizerFolders.status === "ready" && selectedFile) {
+            getOrganizerFoldersStore().assignFile(selectedFile.id, null)
+          }
+        }
+      }}
       emptyMessage={emptyMessage}
       errorBanner={
         scanError

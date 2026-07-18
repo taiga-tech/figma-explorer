@@ -5,6 +5,8 @@ import type {
 } from "../../domain/folder"
 import type { PersistentState } from "../../domain/organizer-state"
 import { err, ok, type Result } from "../../utils/result"
+import type { FileId } from "../scan/create-file-id"
+import { assignFileToFolder, unassignFile } from "./file-assignment-service"
 import { createFolder, type FolderOperationError } from "./folder-service"
 import {
   findFolderTreeNode,
@@ -20,6 +22,12 @@ export type OrganizerFolderMutation =
       type: "set_folder_expanded"
       folderId: FolderId
       expanded: boolean
+      updatedAt: string
+    }
+  | {
+      type: "set_file_assignment"
+      fileId: FileId
+      folderId: FolderId | null
       updatedAt: string
     }
 
@@ -127,5 +135,16 @@ export const applyOrganizerFolderMutation = (
         }
       })
     }
+    case "set_file_assignment":
+      return mutation.folderId === null
+        ? unassignFile(state, {
+            fileId: mutation.fileId,
+            now: mutation.updatedAt
+          })
+        : assignFileToFolder(state, {
+            fileId: mutation.fileId,
+            folderId: mutation.folderId,
+            now: mutation.updatedAt
+          })
   }
 }
