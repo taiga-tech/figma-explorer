@@ -15,9 +15,11 @@ type FolderSectionProps = {
   tree: FolderTreeNode[]
   selectedFolderId: FolderId | null
   storageErrorMessage: string | null
+  canRetrySave: boolean
   onSelectFolder: (folderId: FolderId) => void
   onToggleExpanded: (folderId: FolderId) => void
   onCreateFolder: (name: string) => FolderOperationError | null
+  onRetrySave: () => void
 }
 
 const FOLDER_OPERATION_ERROR_MESSAGES: Record<
@@ -39,9 +41,11 @@ export function FolderSection({
   tree,
   selectedFolderId,
   storageErrorMessage,
+  canRetrySave,
   onSelectFolder,
   onToggleExpanded,
-  onCreateFolder
+  onCreateFolder,
+  onRetrySave
 }: FolderSectionProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [draftName, setDraftName] = useState("")
@@ -85,9 +89,21 @@ export function FolderSection({
       </div>
 
       {storageErrorMessage && (
-        <p className="figma-explorer-panel__folder-alert" role="alert">
-          {storageErrorMessage}
-        </p>
+        <div className="figma-explorer-panel__folder-alert figma-explorer-panel__folder-alert--storage">
+          <p
+            className="figma-explorer-panel__folder-alert-message"
+            role="alert">
+            {storageErrorMessage}
+          </p>
+          {canRetrySave && (
+            <button
+              className="figma-explorer-panel__folder-retry-button"
+              onClick={onRetrySave}
+              type="button">
+              再試行
+            </button>
+          )}
+        </div>
       )}
 
       {isFormOpen && (

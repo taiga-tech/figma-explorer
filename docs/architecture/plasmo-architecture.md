@@ -56,7 +56,7 @@ export const organizerStorage = new Storage({
 
 ## 5. ディレクトリ構成
 
-### 現状（Issue 013 完了時点）
+### 現状（Issue 012〜014 レビュー修正時点）
 
 ```text
 figma-explorer/
@@ -95,7 +95,8 @@ figma-explorer/
 │  │  │  └─ annotate-file-card-routes.ts
 │  │  └─ folders/
 │  │     ├─ folder-service.ts            # 作成・改名・移動・削除 + 階層制約
-│  │     └─ folder-tree-service.ts       # folderTree の純関数ヘルパー
+│  │     ├─ folder-tree-service.ts       # folderTree の純関数ヘルパー
+│  │     └─ organizer-folder-mutation.ts # 再試行可能な永続化操作
 │  ├─ storage/
 │  │  ├─ organizer-storage.ts
 │  │  └─ migrate-persistent-state.ts
@@ -178,5 +179,5 @@ pnpm test     # unit / DOM fixture テスト（Vitest）
 | `src/features/folders`     | 仮想フォルダ処理                                           | 実装     | [data-model.md](./data-model.md)               |
 | `src/features/filters`     | 検索、絞り込み                                             | 予定     | [state-management.md](./state-management.md)   |
 | `src/features/export-json` | JSON出力                                                   | 予定     | [data-model.md](./data-model.md)               |
-| `src/storage`              | Plasmo Storage保存・移行                                   | 実装     | [state-management.md](./state-management.md)   |
+| `src/storage`              | Plasmo Storage保存・移行・複数タブ排他更新                 | 実装     | [state-management.md](./state-management.md)   |
 | `src/utils/result.ts`      | Result型                                                   | 実装     | [error-handling.md](./error-handling.md)       |

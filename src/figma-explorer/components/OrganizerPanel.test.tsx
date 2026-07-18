@@ -12,9 +12,11 @@ const emptyFolderSection: ComponentProps<
   tree: [],
   selectedFolderId: null,
   storageErrorMessage: null,
+  canRetrySave: false,
   onSelectFolder: () => undefined,
   onToggleExpanded: () => undefined,
-  onCreateFolder: () => null
+  onCreateFolder: () => null,
+  onRetrySave: () => undefined
 }
 
 describe("OrganizerPanel", () => {
@@ -69,5 +71,29 @@ describe("OrganizerPanel", () => {
 
     expect(html).toContain('role="alert"')
     expect(html).toContain("scan_dom_missing")
+  })
+
+  it("renders a retry action for an unsaved folder change", () => {
+    const html = renderToStaticMarkup(
+      createElement(OrganizerPanel, {
+        emptyMessage: null,
+        errorBanner: null,
+        folderSection: {
+          ...emptyFolderSection,
+          storageErrorMessage: "フォルダの保存に失敗しました。",
+          canRetrySave: true
+        },
+        files: [],
+        onRescan: () => undefined,
+        onSelectFile: () => undefined,
+        routeLabel: "/drafts",
+        scanSummary: "0 files extracted / 0 skipped",
+        selectedFileId: null,
+        targetLabel: "https://www.figma.com/*"
+      })
+    )
+
+    expect(html).toContain("フォルダの保存に失敗しました。")
+    expect(html).toContain("再試行")
   })
 })

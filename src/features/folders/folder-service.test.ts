@@ -337,6 +337,39 @@ describe("moveFolder", () => {
     expect(accepted.ok).toBe(true)
   })
 
+  it("parentIdが循環した保存データでも別の親へ移動して循環を解消できる", () => {
+    const base = buildStateWithFolders()
+    const state: PersistentState = {
+      ...base,
+      folders: {
+        ...base.folders,
+        "folder-design": {
+          ...base.folders["folder-design"],
+          parentId: "folder-design-child"
+        }
+      }
+    }
+
+    const result = moveFolder(state, {
+      folderId: "folder-design",
+      parentId: "folder-research",
+      now: LATER
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (result.ok) {
+      expect(result.value.folders["folder-design"]?.parentId).toBe(
+        "folder-research"
+      )
+      expect(
+        collectFolderTreeIds(result.value.folderTree).filter(
+          (id) => id === "folder-design"
+        )
+      ).toHaveLength(1)
+    }
+  })
+
   it("存在しないフォルダはfolder_not_foundを返す", () => {
     const result = moveFolder(buildStateWithFolders(), {
       folderId: "missing",
@@ -491,6 +524,57 @@ describe("deleteFolder", () => {
       ok: false,
       error: { kind: "system_folder_not_deletable" }
     })
+  })
+
+  it("サブツリー内のシステムフォルダを一緒に削除できない", () => {
+    const base = buildStateWithFolders()
+    const state: PersistentState = {
+      ...base,
+      folders: {
+        ...base.folders,
+        "folder-design-child": {
+          ...base.folders["folder-design-child"],
+          isSystem: true
+        }
+      }
+    }
+    const snapshot = structuredClone(state)
+
+    const result = deleteFolder(state, { folderId: "folder-design" })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "system_folder_not_deletable" }
+    })
+    expect(state).toEqual(snapshot)
+  })
+
+  it("循環した保存データでも対象IDを重複処理せず削除できる", () => {
+    const base = buildStateWithFolders()
+    const state: PersistentState = {
+      ...base,
+      folders: {
+        ...base.folders,
+        "folder-design": {
+          ...base.folders["folder-design"],
+          parentId: "folder-design-child"
+        }
+      }
+    }
+
+    const result = deleteFolder(state, {
+      folderId: "folder-design",
+      now: LATER
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (result.ok) {
+      expect(Object.keys(result.value.folders)).toEqual(["folder-research"])
+      expect(collectFolderTreeIds(result.value.folderTree)).toEqual([
+        "folder-research"
+      ])
+    }
   })
 
   it("元のstateを変更しない", () => {

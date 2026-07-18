@@ -54,12 +54,16 @@ export const removeFolderTreeNode = (
   tree: FolderTreeNode[],
   folderId: FolderId
 ): FolderTreeNode[] =>
-  tree
-    .filter((node) => node.folderId !== folderId)
-    .map((node) => ({
-      ...node,
-      children: removeFolderTreeNode(node.children, folderId)
-    }))
+  tree.flatMap((node) =>
+    node.folderId === folderId
+      ? []
+      : [
+          {
+            ...node,
+            children: removeFolderTreeNode(node.children, folderId)
+          }
+        ]
+  )
 
 /** 対象ノードの展開状態だけを更新した新しいツリーを返す。 */
 export const setFolderTreeNodeExpanded = (

@@ -329,6 +329,29 @@
   line-height: 1.5;
 }
 
+.figma-explorer-panel__folder-alert--storage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.figma-explorer-panel__folder-alert-message {
+  margin: 0;
+}
+
+.figma-explorer-panel__folder-retry-button {
+  flex: none;
+  padding: 4px 8px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .figma-explorer-panel__folder-form {
   display: grid;
   gap: 8px;

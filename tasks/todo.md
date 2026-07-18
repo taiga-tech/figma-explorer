@@ -774,11 +774,121 @@
 ### レビュー
 
 - `folder-tree-service.ts` に `setFolderTreeNodeExpanded` を追加し、展開状態の更新も immutable な純関数に揃えた
-- `organizer-folders-store.ts` を新設し、購読開始時に organizer-storage の `loadOrMigrate` で復元、フォルダ作成・展開切替のたびに `save` する構成にした（useSyncExternalStore 用の subscribe / getSnapshot、テスト用に storage 注入可能）
-- 読み込み失敗は `status: "error"`、保存失敗・破損退避の警告は `storageError` として snapshot に載せ、UI で日本語文言に変換して表示する
+- `organizer-folders-store.ts` を新設し、購読開始時に organizer-storage の `loadOrMigrate` で復元する。レビュー修正後は作成・展開の mutation を最新 state へ排他適用し、外部更新を `watch` で同期する構成へ更新した（useSyncExternalStore 用の subscribe / getSnapshot、テスト用に storage 注入可能）
+- 読み込み失敗は `status: "error"`、保存失敗・競合・破損退避の警告は `storageError` として snapshot に載せ、UI で日本語文言に変換して表示する。保存失敗時は未保存 mutation を保持して再試行できる
 - `FolderTree` / `FolderTreeItem` を追加し、`role="tree"` / `role="treeitem"` / `role="group"` / `aria-expanded`（子を持つノードのみ） / `aria-selected` / `aria-level` を付与した
-- `FolderSection` を追加し、新規作成ボタン → インラインフォーム → 選択中フォルダ配下（未選択ならルート）へ作成する導線を実装した。親配下へ作成したときは親を自動展開する
+- `FolderSection` を追加し、新規作成ボタン → インラインフォーム → 選択中フォルダ配下（未選択ならルート）へ作成する導線を実装した。親配下へ作成したときは作成先までの祖先パスを自動展開する
 - `FigmaExplorerPanel` にフォルダ選択状態（クリックで選択/解除）を持たせ、`OrganizerPanel` へ `folderSection` として接続した
 - docs/architecture/plasmo-architecture.md の現状ディレクトリと責務分割表を Issue 013 完了時点へ更新した
 - テスト 11 件を追加（tree サービス 2、FolderTree 3、フォルダストア 6）し、`pnpm lint` / `pnpm typecheck` / `pnpm test`（97件） / `pnpm build` の成功を確認した
 - 未実施: 実 Figma Drafts 上での smoke test（フォルダ作成 → リロード後の復元、展開状態の永続化、Figma 本体 UI との干渉確認）
+
+## Issue 012〜014 レビュー指摘を修正する
+
+### 仕様
+
+- 複数の Figma タブから同じ永続状態を更新しても、古い `PersistentState` の全体保存で他タブの変更を消さない
+- 永続状態の更新は、最新状態の読み込みから保存までを content-script 間で共有される単一の直列化境界内で行う
+- 外部タブの保存結果を購読中ストアへ反映し、次の操作と表示が古い snapshot を使わないようにする
+- 保存失敗時は未保存状態を保持して明示的に再試行できるようにし、最新状態の保存成功後は `storage_save_failed` を解消する
+- 非表示の選択フォルダ配下へ作成した場合も、ルートから作成先までの祖先を展開して新規フォルダを表示する
+- 既存保存データに循環した `parentId` があっても子孫収集を必ず終了させ、削除・移動で UI スレッドを停止させない
+- 削除サブツリーに `isSystem` フォルダが1件でも含まれる場合は削除全体を拒否し、間接削除を防ぐ
+
+### 実施計画
+
+- [x] 現行 background / storage / store の境界を確認し、複数タブ更新を直列化する最小構成を決める
+- [x] 2ストアの競合更新、保存失敗からの再試行、祖先展開の回帰テストを追加する
+- [x] organizer storage / folders store を修正し、最新状態を基準に永続更新する
+- [x] 循環済みデータと system folder を含むサブツリー削除の回帰テストを追加する
+- [x] folder service の子孫収集と削除ガードを修正する
+- [x] `pnpm lint` `pnpm typecheck` `pnpm test` `pnpm build` と React Doctor を実行する
+- [x] 差分レビュー、結果記録、再発防止の教訓追記を行う
+
+### レビュー
+
+- organizer storage は全 state の `save` を廃止し、Web Lock
+  `figma-explorer:organizer-state` 内で最新 state の load → mutation 適用 → save を
+  完了する `update` API へ変更した。現行の書き込み元である Figma content script
+  間で同時更新を直列化し、2ストアからの同時作成が両方残ることをテストした
+- フォルダ作成は ID・時刻を固定し、展開切替は目標値を持つ冪等 mutation とした。
+  再試行時も重複・再反転せず、より新しい `meta.updatedAt` を巻き戻さない
+- organizer folders store は外部 storage watch を購読し、pending mutation を最新 state
+  へ rebase する。load / watch / update の到着順は世代番号と revision で制御し、最後の
+  React 購読解除時には storage listener も解除する
+- 保存失敗時は optimistic state と pending mutation を保持し、UI の「再試行」から
+  保存できる。成功時は `storage_save_failed` を解除し、最新 state へ適用不能な操作は
+  `storage_update_conflict` として再試行可能な I/O 失敗から分離した
+- 選択中フォルダ配下への作成では祖先パス全体を展開する。削除はサブツリー内の
+  system folder をすべて検査し、parentId が循環した保存データの削除・移動も有限時間で
+  終了するよう visited set と回帰テストを追加した
+- storage clear の通知、旧版 migration 失敗の退避・初期化、再試行ボタンのクリックと
+  live region の配置までテストし、関連 architecture docs とエラー文言を現行実装へ揃えた
+- 検証: `pnpm lint`、`pnpm typecheck`、`pnpm test`（15ファイル・121件）、
+  `pnpm build`、`git diff --check` 成功。React Doctor は 100 / 100（指摘なし）
+- 未実施: 実 Figma Drafts 上での複数タブ smoke test。拡張機能を再読み込み後、2タブでの
+  同時フォルダ作成・保存失敗時の再試行・リロード後の復元を目視確認する必要がある
+
+## FigmaExplorerPanel の初回レンダークラッシュを修正する
+
+### 仕様
+
+- ファイルカード検出結果が `empty` または `error` で、抽出結果がまだ存在しない初回レンダーでもパネルを表示できる
+- 抽出結果が存在しない状態では `files` / `skippedCount` を参照せず、検出状態に対応する summary と empty/error 表示を返す
+- `success` 時の抽出件数・skip 件数表示と、既存のフォルダ表示・保存エラー表示は変更しない
+- 実 Figma で発生した初期化順序をコンポーネントテストで再現し、同じ null 参照の再発を防ぐ
+
+### 実施計画
+
+- [x] コンソールスタックと `FigmaExplorerPanel` の初期化経路を照合し、null 参照箇所を特定する
+- [x] `empty` の初回レンダーを再現する回帰テストを追加し、修正前に失敗を確認する
+- [x] nullable な抽出結果を dependency 評価時に参照しないよう summary 算出を修正する
+- [x] 関連テストと `pnpm lint` `pnpm typecheck` `pnpm test` `pnpm build` を実行する
+- [x] React Doctor と差分レビューを実施し、レビュー結果と再発防止の教訓を追記する
+
+### レビュー
+
+- 原因は `empty` / `error` 時に `extractedFileCards` が `null` になる一方、
+  `scanSummary` の `useMemo` dependency 配列が `.files.length` と
+  `.skippedCount` を callback の status 分岐より先に無条件評価していたことだった
+- dependency 側の2参照を optional chaining に変更し、正当な初期 `empty` / `error`
+  snapshot を維持したままパネルをレンダーできるようにした
+- `FigmaExplorerPanel.test.tsx` を追加し、`empty` snapshot の初回レンダーが修正前に
+  同じ `Cannot read properties of null (reading 'files')` で失敗し、修正後に summary と
+  empty message を表示することを確認した
+- 検証: targeted test、`pnpm lint`、`pnpm typecheck`、`pnpm test`
+  （16ファイル・122件）、`pnpm build`、`git diff --check` 成功。React Doctor は
+  100 / 100（指摘なし）
+- 未実施: in-app browser が利用できなかったため、修正版を読み込んだ実 Figma Drafts
+  での目視 smoke test
+
+## mise tasks を整理する
+
+### 仕様
+
+- `package.json` の主要スクリプトを `mise.toml` の task として一貫した名前で公開する
+- 日常の開発・整形・検証・成果物生成を `mise run <task>` から実行できるようにする
+- 一括検証用 task を用意し、必須の lint・型チェック・テスト・ビルドをまとめて実行できるようにする
+- `AGENTS.md` のコマンド案内と完了前検証を mise task 基準へ変更する
+- npm script は mise task の実装詳細として残し、処理の重複定義は避ける
+
+### 実施計画
+
+- [x] 現在の `mise.toml`、`package.json`、`AGENTS.md` とコマンド参照を確認する
+- [x] `mise.toml` の task を整理し、説明と一括検証 task を追加する
+- [x] `AGENTS.md` を mise task を使うワークフローへ更新する
+- [x] task 一覧と主要な検証 task を実行する
+- [x] 差分をレビューし、結果を記録する
+
+### レビュー
+
+- `mise.toml` に `dev` / `build` / `package` / `format` / `lint` /
+  `typecheck` / `test` を揃え、`mise tasks ls` で説明付きの一覧を確認した
+- `check` は各検証 task を lint → typecheck → test → build の順に呼び出し、並列
+  task の失敗で他の検証結果が不明にならない構成にした
+- `AGENTS.md` の通常コマンドを `mise run <task>` に統一し、PR 前の標準検証を
+  `mise run check` とした
+- 検証: `mise tasks ls`、`mise tasks info check`、`mise run check`、
+  `git diff --check` 成功。テストは16ファイル・122件、Plasmo production build も成功した
+- Plasmo build はサンドボックス内では `Operation not permitted` になったため、同じ
+  `mise run check` を承認済みのサンドボックス外実行で再確認した

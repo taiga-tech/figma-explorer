@@ -21,8 +21,10 @@ type FigmaExplorerPanelProps = {
 const STORAGE_ERROR_MESSAGES: Partial<Record<OrganizerErrorKind, string>> = {
   storage_load_failed: "保存済みフォルダの読み込みに失敗しました。",
   storage_save_failed: "フォルダの保存に失敗しました。",
+  storage_update_conflict:
+    "別のタブで状態が変わったため、フォルダ操作を反映できませんでした。",
   storage_migration_failed:
-    "保存データのバージョンがこの拡張機能より新しいため、読み込めません。",
+    "保存データのバージョンを現在の拡張機能で処理できません。",
   storage_corrupted:
     "保存データが破損していたため初期化しました。元データはバックアップへ退避済みです。"
 }
@@ -54,8 +56,8 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
         return scanError?.kind ?? "error"
     }
   }, [
-    extractedFileCards.files.length,
-    extractedFileCards.skippedCount,
+    extractedFileCards?.files.length,
+    extractedFileCards?.skippedCount,
     fileCardDetectionResult.status,
     scanError?.kind
   ])
@@ -131,6 +133,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
         tree: organizerFolders.folderTree,
         selectedFolderId: resolvedSelectedFolderId,
         storageErrorMessage,
+        canRetrySave: organizerFolders.canRetrySave,
         onSelectFolder: (folderId) =>
           setSelectedFolderId((current) =>
             current === folderId ? null : folderId
@@ -141,7 +144,10 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
           getOrganizerFoldersStore().createFolder({
             name,
             parentId: resolvedSelectedFolderId
-          })
+          }),
+        onRetrySave: () => {
+          void getOrganizerFoldersStore().retrySave()
+        }
       }}
       onRescan={rescanFileCards}
       onSelectFile={setSelectedFileId}

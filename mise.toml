@@ -1,8 +1,36 @@
-[tasks.format]
-run ="pnpm format"
+[tasks.dev]
+description = "Start the Plasmo development build"
+run = "pnpm dev"
 
 [tasks.build]
-run ="pnpm build"
+description = "Create the production extension build"
+run = "pnpm build"
 
-[tasks.dev]
-run ="pnpm dev"
+[tasks.package]
+description = "Create the packaged extension artifact"
+run = "pnpm package"
+
+[tasks.format]
+description = "Format TypeScript, React, Markdown, and CSS files"
+run = "pnpm format"
+
+[tasks.lint]
+description = "Run ESLint and Prettier checks"
+run = "pnpm lint"
+
+[tasks.typecheck]
+description = "Run the TypeScript type checker"
+run = "pnpm typecheck"
+
+[tasks.test]
+description = "Run the Vitest test suite"
+run = "pnpm test"
+
+[tasks.check]
+description = "Run all required validation checks"
+run = [
+  "mise run lint",
+  "mise run typecheck",
+  "mise run test",
+  "mise run build",
+]

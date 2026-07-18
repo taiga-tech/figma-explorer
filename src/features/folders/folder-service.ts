@@ -51,11 +51,18 @@ const nextSiblingSortOrder = (
   folders: PersistentState["folders"],
   parentId: FolderId | null
 ): number => {
-  const siblingSortOrders = Object.values(folders)
-    .filter((folder) => folder.parentId === parentId)
-    .map((folder) => folder.sortOrder)
+  let nextSortOrder: number | null = null
 
-  return siblingSortOrders.length === 0 ? 0 : Math.max(...siblingSortOrders) + 1
+  for (const folder of Object.values(folders)) {
+    if (folder.parentId === parentId) {
+      nextSortOrder =
+        nextSortOrder === null
+          ? folder.sortOrder + 1
+          : Math.max(nextSortOrder, folder.sortOrder + 1)
+    }
+  }
+
+  return nextSortOrder ?? 0
 }
 
 /**
@@ -90,12 +97,18 @@ const folderSubtreeHeight = (
   }
 
   visited.add(rootId)
+  let maxChildHeight = 0
 
-  const childHeights = Object.values(folders)
-    .filter((folder) => folder.parentId === rootId)
-    .map((folder) => folderSubtreeHeight(folders, folder.id, visited))
+  for (const folder of Object.values(folders)) {
+    if (folder.parentId === rootId) {
+      maxChildHeight = Math.max(
+        maxChildHeight,
+        folderSubtreeHeight(folders, folder.id, visited)
+      )
+    }
+  }
 
-  return 1 + (childHeights.length === 0 ? 0 : Math.max(...childHeights))
+  return 1 + maxChildHeight
 }
 
 /** 対象フォルダ自身と、parentId で辿れる子孫すべての ID を返す。 */
@@ -103,11 +116,13 @@ const collectFolderAndDescendantIds = (
   folders: PersistentState["folders"],
   rootId: FolderId
 ): FolderId[] => {
+  const visited = new Set<FolderId>([rootId])
   const ids = [rootId]
 
   for (let index = 0; index < ids.length; index += 1) {
     for (const folder of Object.values(folders)) {
-      if (folder.parentId === ids[index]) {
+      if (folder.parentId === ids[index] && !visited.has(folder.id)) {
+        visited.add(folder.id)
         ids.push(folder.id)
       }
     }
@@ -278,15 +293,15 @@ export const deleteFolder = (
     return err({ kind: "folder_not_found" })
   }
 
-  if (folder.isSystem) {
-    return err({ kind: "system_folder_not_deletable" })
-  }
-
-  const now = input.now ?? new Date().toISOString()
   const removedIds = new Set(
     collectFolderAndDescendantIds(state.folders, folder.id)
   )
 
+  if ([...removedIds].some((id) => state.folders[id]?.isSystem)) {
+    return err({ kind: "system_folder_not_deletable" })
+  }
+
+  const now = input.now ?? new Date().toISOString()
   const folders = Object.fromEntries(
     Object.entries(state.folders).filter(([id]) => !removedIds.has(id))
   )

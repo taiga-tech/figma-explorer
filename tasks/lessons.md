@@ -47,3 +47,12 @@
 - 分岐が 3 通り以上ある表示ロジックは、入れ子の三項演算子や `else if` 連鎖ではなく `switch` で書く。今回の `scanStatus` / empty message のような union 分岐は `switch` に寄せた方が読みやすくレビューもしやすい
 - この repo の tsconfig（strict 無効）では `!result.ok` で Result の判別 union が絞り込まれない。既存コードと同じく `result.ok === false` で分岐する
 - 純関数サービスに ID 生成や現在時刻が絡むときは、`createId` / `now` を optional 引数として注入可能にしておくとテストが決定的になり、fixture もサービス関数自身で組み立てられる
+- 複数タブが同じ `chrome.storage` の state を更新するときは、各タブ内の save queue だけでは競合を防げない。共有ロック内で最新 state を読み直し、全体 snapshot ではなく操作 intent を適用してから保存する
+- 保存失敗後に操作を再試行する場合、作成は最初に ID・時刻を固定し、toggle は反転操作ではなく目標値の設定として表現する。同じ mutation を再適用しても重複・再反転しない冪等性をテストする
+- ツリーの制約を検査するときは対象ノードだけでなく削除サブツリー全体を確認し、既存データが循環していても終了するよう走査に visited set を持たせる
+- 折りたたまれた階層内へ要素を追加した直後に表示するには、直接の親だけでなくルートから作成先までの祖先パス全体を展開する
+- 古い mutation を最新 state へ再適用するときは、操作を冪等にするだけでなく `meta.updatedAt` も単調増加を保ち、再試行時刻で新しい更新時刻を巻き戻さない
+- storage の watch と初回 load は到着順が一定ではない。世代番号で古い非同期応答を捨て、破損警告と一時的な load error を別管理し、最後の購読解除時には外部 listener も解除する
+- 最新 state へ適用できない mutation は再試行可能な保存失敗と区別し、最新 state を呼び出し元へ返して競合操作だけを除外する。後続の独立 mutation は止めずに保存を継続する
+- `useMemo` の callback 内を status で分岐しても dependency 配列は毎レンダー無条件に評価される。nullable な派生値は dependency 側でも optional chaining し、external store の初期 `empty` / `error` snapshot をコンポーネントテストで実際にレンダーして確認する
+- mise の総合検証 task で lint・型チェック・テスト・ビルドをまとめるときは、`depends` の並列実行で1件の失敗時に他 task までキャンセルされないよう、各 task を順番に呼び出して失敗箇所と完了済み工程を明確にする
