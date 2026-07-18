@@ -2,16 +2,16 @@
 
 ## 1. 現状と移行パス
 
-現行実装は仮パネル
-`src/figma-explorer/components/FigmaExplorerPanel.tsx`（実装済み）で、
-検出・抽出結果の確認だけができる。本書が定義する `OrganizerApp` /
-`OrganizerPanel` へ次の段階で置き換える。
+現行実装は
+`src/figma-explorer/components/FigmaExplorerPanel.tsx` をコンテナ、
+`OrganizerPanel` を表示層として、検出・抽出結果の一覧とフォルダツリー・作成 UI
+まで提供している。分類・検索・JSON 出力を統合する `OrganizerApp` は次段階で追加する。
 
-| 段階 | 内容                                                       | 引き継ぐもの                                        |
-| ---- | ---------------------------------------------------------- | --------------------------------------------------- |
-| 1    | `OrganizerApp` を新設し、FigmaExplorerPanel をその中へ移す | `use-current-href` / `use-file-card-detection`      |
-| 2    | Storage 復元と DraftFile 合成を OrganizerApp に実装        | `file-card-detection-store` / `href-store`          |
-| 3    | OrganizerPanel 一式を実装し、FigmaExplorerPanel を廃棄     | styles（クラス命名は `figma-explorer-` 接頭辞維持） |
+| 段階 | 内容                                                          | 状態   |
+| ---- | ------------------------------------------------------------- | ------ |
+| 1    | `OrganizerPanel` とフォルダ UI を FigmaExplorerPanel から接続 | 完了   |
+| 2    | `OrganizerApp` で Storage と DraftFile の分類情報を合成       | 未実装 |
+| 3    | 検索・フィルター・JSON 出力を統合                             | 未実装 |
 
 ## 2. 画面構成
 
@@ -254,7 +254,8 @@ Figma上のファイル移動、削除、権限変更は行いません。
 | `scan_partial`             | 件数のみ表示（一覧表示は継続）               |
 | `storage_load_failed`      | 「保存データを読み込めません」               |
 | `storage_save_failed`      | 「保存に失敗しました」+ 再試行               |
-| `storage_migration_failed` | 「旧データを変換できません」（読み取り専用） |
+| `storage_update_conflict`  | 「別タブの変更と競合しました」（再試行なし） |
+| `storage_migration_failed` | 「保存バージョンを処理できません」           |
 | `storage_corrupted`        | 「保存データを初期化しました」（退避済み）   |
 | `export_failed`            | 「JSON出力に失敗しました」+ 再試行           |
 

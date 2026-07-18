@@ -67,7 +67,7 @@ type PersistentState = {
 ただし、JSON出力時には、現在スキャンできている `DraftFile[]` を
 出力に含めてもよい。
 
-## 5. Plasmo Storage Repository（予定）
+## 5. Plasmo Storage Repository（実装済み）
 
 ```ts
 import { Storage } from "@plasmohq/storage"
@@ -82,22 +82,50 @@ const storage = new Storage({
 })
 
 export const organizerStorage = {
-  async loadOrMigrate(): Promise<Result<PersistentState>> {
+  async loadOrMigrate(): Promise<Result<LoadOrMigrateValue>> {
     // 1. STORAGE_KEY を読む。無ければ初期状態を ok で返す
     // 2. schemaVersion を確認し、data-model.md §10 の3分岐で処理する
     // 3. migration 成功時は保存し直してから返す
   },
 
-  async save(state: PersistentState): Promise<Result<void>> {
-    // 保存は直列化する（前の save 完了を待ってから次を実行）
+  async update<T, E>(
+    apply: (
+      latest: PersistentState
+    ) => Result<{ state: PersistentState; value: T }, E>
+  ): Promise<
+    Result<{ state: PersistentState; value: T }, OrganizerStorageUpdateError<E>>
+  > {
+    // Web Lock 内で最新 state の load → apply → save を完了する
   },
 
-  async clear(): Promise<void> {
+  watch(listener: (state: PersistentState) => void): () => void {
+    // chrome.storage の外部更新を検証して購読ストアへ通知する
+  },
+
+  async clear(): Promise<Result<void>> {
     // STORAGE_KEY を削除する。BACKUP_STORAGE_KEY は残す
   }
 }
 ```
 
+- `PersistentState` 全体を呼び出し側の古い snapshot で上書きしない。
+  作成や展開状態の設定を mutation として渡し、`update` がロック取得後に
+  読み直した最新 state へ適用する
+- `update` は storage I/O の失敗と mutation 適用競合を区別し、適用競合時は
+  読み込んだ最新 state も返す。ストアは競合した操作だけを除外し、後続操作を続ける
+- フォルダ作成 mutation は ID・作成時刻を最初に確定し、展開操作は toggle
+  ではなく目標値を保持する。保存失敗後に同じ mutation を再適用しても結果が
+  重複・反転しないよう冪等にする
+- 現在の書き込み元は `https://www.figma.com/*` の content script に限定し、
+  同じ storage bucket の Web Lock
+  `figma-explorer:organizer-state` で複数タブを直列化する
+- popup / background など別 origin の書き込み元を追加する場合は、この前提を
+  保てないため background の単一 coordinator へ更新境界を移してから追加する
+- `OrganizerFoldersStore` は未保存 mutation を保持して optimistic state を表示し、
+  `watch` で届いた外部 state へ再適用する。保存失敗時は明示的な再試行を出し、
+  成功後に `storage_save_failed` を解除する
+- `clear` によるキー削除も `watch` では空の初期状態として通知し、購読中ストアに
+  削除前のフォルダを残さない
 - 読み込み・移行の分岐仕様は [data-model.md](./data-model.md) §10 が正本
 - 失敗時の `OrganizerError` は
   [error-handling.md](./error-handling.md) §3 のコードを使う

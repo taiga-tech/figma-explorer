@@ -3,6 +3,7 @@ export type OrganizerErrorKind =
   | "scan_partial"
   | "storage_load_failed"
   | "storage_save_failed"
+  | "storage_update_conflict"
   | "storage_migration_failed"
   | "storage_corrupted"
   | "export_failed"

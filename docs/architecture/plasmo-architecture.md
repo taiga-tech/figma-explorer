@@ -56,7 +56,7 @@ export const organizerStorage = new Storage({
 
 ## 5. ディレクトリ構成
 
-### 現状（Issue 006 完了時点）
+### 現状（Issue 012〜014 レビュー修正時点）
 
 ```text
 figma-explorer/
@@ -69,24 +69,39 @@ figma-explorer/
 │  │  ├─ figma-explorer.tsx              # isolated world: UI注入 entry
 │  │  └─ figma-file-route-bridge.ts      # MAIN world: fiberからURL解決
 │  ├─ figma-explorer/
-│  │  ├─ components/
-│  │  │  └─ FigmaExplorerPanel.tsx       # 仮パネル（OrganizerPanelへ置換予定）
+│  │  ├─ components/                     # OrganizerPanel / FolderTree /
+│  │  │                                  # FileList ほか（FigmaExplorerPanel
+│  │  │                                  # はコンテナとして残存）
 │  │  ├─ constants/
 │  │  ├─ formatters/
 │  │  ├─ hooks/
-│  │  ├─ stores/
+│  │  ├─ stores/                         # 検出ストア、フォルダ状態ストア
 │  │  ├─ styles/
 │  │  ├─ types/
 │  │  └─ utils/
-│  └─ features/
-│     └─ scan/
-│        ├─ detect-drafts-page.ts
-│        ├─ detect-file-card-elements.ts
-│        ├─ extract-file-card-metadata.ts
-│        ├─ draft-file.ts
-│        ├─ file-card-route-attribute.ts
-│        ├─ resolve-file-card-route-from-fiber.ts
-│        └─ annotate-file-card-routes.ts
+│  ├─ domain/
+│  │  ├─ folder.ts                       # VirtualFolder / FolderTreeNode /
+│  │  │                                  # MAX_FOLDER_DEPTH
+│  │  └─ organizer-state.ts              # PersistentState / SCHEMA_VERSION
+│  ├─ features/
+│  │  ├─ scan/
+│  │  │  ├─ detect-drafts-page.ts
+│  │  │  ├─ detect-file-card-elements.ts
+│  │  │  ├─ extract-file-card-metadata.ts
+│  │  │  ├─ create-file-id.ts
+│  │  │  ├─ draft-file.ts
+│  │  │  ├─ file-card-route-attribute.ts
+│  │  │  ├─ resolve-file-card-route-from-fiber.ts
+│  │  │  └─ annotate-file-card-routes.ts
+│  │  └─ folders/
+│  │     ├─ folder-service.ts            # 作成・改名・移動・削除 + 階層制約
+│  │     ├─ folder-tree-service.ts       # folderTree の純関数ヘルパー
+│  │     └─ organizer-folder-mutation.ts # 再試行可能な永続化操作
+│  ├─ storage/
+│  │  ├─ organizer-storage.ts
+│  │  └─ migrate-persistent-state.ts
+│  └─ utils/
+│     └─ result.ts
 └─ README.md
 ```
 
@@ -144,24 +159,25 @@ tests/
 ```bash
 pnpm dev      # 開発ビルド（build/chrome-mv3-dev を Chrome に読み込む）
 pnpm build    # 本番ビルド
+pnpm lint     # ESLint + Prettier check
 pnpm typecheck # TypeScript 型チェック
 pnpm format   # Prettier 整形
-pnpm test     # unit / DOM fixture テスト（Issue 020 で導入予定）
+pnpm test     # unit / DOM fixture テスト（Vitest）
 ```
 
 ## 7. 責務分割
 
-| 領域                       | 役割                                     | 状態 | 関連文書                                       |
-| -------------------------- | ---------------------------------------- | ---- | ---------------------------------------------- |
-| `src/background.ts`        | 拡張更新時のcontent script再注入         | 実装 | [scan-pipeline.md](./scan-pipeline.md)         |
-| `src/contents/`            | UI注入 entry（isolated）とbridge（MAIN） | 実装 | [scan-pipeline.md](./scan-pipeline.md)         |
-| `src/figma-explorer/`      | Figma content script 向けの補助ロジック  | 実装 | [state-management.md](./state-management.md)   |
-| `src/features/scan`        | Figma DOM読み取り、fiberからのURL解決    | 実装 | [scan-pipeline.md](./scan-pipeline.md)         |
-| `src/app`                  | アプリ全体の状態と操作                   | 予定 | [state-management.md](./state-management.md)   |
-| `src/components`           | React UI                                 | 予定 | [ui-and-components.md](./ui-and-components.md) |
-| `src/domain`               | 型、ドメイン定義                         | 予定 | [data-model.md](./data-model.md)               |
-| `src/features/folders`     | 仮想フォルダ処理                         | 予定 | [data-model.md](./data-model.md)               |
-| `src/features/filters`     | 検索、絞り込み                           | 予定 | [state-management.md](./state-management.md)   |
-| `src/features/export-json` | JSON出力                                 | 予定 | [data-model.md](./data-model.md)               |
-| `src/storage`              | Plasmo Storage保存・移行                 | 予定 | [state-management.md](./state-management.md)   |
-| `src/utils/result.ts`      | Result型                                 | 予定 | [error-handling.md](./error-handling.md)       |
+| 領域                       | 役割                                                       | 状態     | 関連文書                                       |
+| -------------------------- | ---------------------------------------------------------- | -------- | ---------------------------------------------- |
+| `src/background.ts`        | 拡張更新時のcontent script再注入                           | 実装     | [scan-pipeline.md](./scan-pipeline.md)         |
+| `src/contents/`            | UI注入 entry（isolated）とbridge（MAIN）                   | 実装     | [scan-pipeline.md](./scan-pipeline.md)         |
+| `src/figma-explorer/`      | Figma content script 向けの補助ロジック                    | 実装     | [state-management.md](./state-management.md)   |
+| `src/features/scan`        | Figma DOM読み取り、fiberからのURL解決                      | 実装     | [scan-pipeline.md](./scan-pipeline.md)         |
+| `src/app`                  | アプリ全体の状態と操作                                     | 予定     | [state-management.md](./state-management.md)   |
+| `src/components`           | React UI（現状は `src/figma-explorer/components/` に実装） | 一部実装 | [ui-and-components.md](./ui-and-components.md) |
+| `src/domain`               | 型、ドメイン定義                                           | 実装     | [data-model.md](./data-model.md)               |
+| `src/features/folders`     | 仮想フォルダ処理                                           | 実装     | [data-model.md](./data-model.md)               |
+| `src/features/filters`     | 検索、絞り込み                                             | 予定     | [state-management.md](./state-management.md)   |
+| `src/features/export-json` | JSON出力                                                   | 予定     | [data-model.md](./data-model.md)               |
+| `src/storage`              | Plasmo Storage保存・移行・複数タブ排他更新                 | 実装     | [state-management.md](./state-management.md)   |
+| `src/utils/result.ts`      | Result型                                                   | 実装     | [error-handling.md](./error-handling.md)       |

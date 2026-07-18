@@ -9,13 +9,15 @@
 
 ## Build, Test, and Development Commands
 
-- `pnpm dev`: starts the Plasmo development build. Load `build/chrome-mv3-dev` in Chrome for local testing.
-- `pnpm build`: creates the production build in `build/`.
-- `pnpm lint`: runs ESLint for TypeScript/React code and then Prettier check mode across `**/*.{ts,tsx,md,css}`.
-- `pnpm typecheck`: runs `tsc --noEmit` for TypeScript type checking.
-- `pnpm package`: generates the packaged extension artifact for distribution.
-- `pnpm format`: runs Prettier across `**/*.{ts,tsx,md,css}`.
-- `pnpm test`: runs Vitest (unit + jsdom DOM fixture tests). See `docs/architecture/testing-strategy.md`.
+- Use `mise run <task>` as the standard entrypoint for repository commands. The underlying `pnpm` scripts are implementation details of the tasks in `mise.toml`.
+- `mise run dev`: starts the Plasmo development build. Load `build/chrome-mv3-dev` in Chrome for local testing.
+- `mise run build`: creates the production build in `build/`.
+- `mise run package`: generates the packaged extension artifact for distribution.
+- `mise run format`: formats TypeScript, React, Markdown, and CSS files with Prettier.
+- `mise run lint`: runs ESLint and Prettier in check mode.
+- `mise run typecheck`: runs `tsc --noEmit` for TypeScript type checking.
+- `mise run test`: runs Vitest (unit + jsdom DOM fixture tests). See `docs/architecture/testing-strategy.md`.
+- `mise run check`: runs lint, type checking, tests, and the production build as the standard complete validation.
 
 ## Coding Style & Naming Conventions
 
@@ -26,7 +28,7 @@
 
 ## Testing Guidelines
 
-- Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`, then smoke-test the extension in Chrome before opening a PR.
+- Run `mise run check`, then smoke-test the extension in Chrome before opening a PR.
 - Place tests next to the module under test as `*.test.ts` / `*.test.tsx`. DOM fixtures live in `tests/fixtures/`.
 - Verify the popup UI and any new entrypoints after reloading the unpacked extension.
 

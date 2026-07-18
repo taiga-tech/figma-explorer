@@ -1,8 +1,23 @@
-import { createElement } from "react"
+import { createElement, type ComponentProps } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 
 import { OrganizerPanel } from "./OrganizerPanel"
+
+const emptyFolderSection: ComponentProps<
+  typeof OrganizerPanel
+>["folderSection"] = {
+  status: "ready",
+  folders: {},
+  tree: [],
+  selectedFolderId: null,
+  storageErrorMessage: null,
+  canRetrySave: false,
+  onSelectFolder: () => undefined,
+  onToggleExpanded: () => undefined,
+  onCreateFolder: () => null,
+  onRetrySave: () => undefined
+}
 
 describe("OrganizerPanel", () => {
   it("renders summary counts and scan metadata", () => {
@@ -10,6 +25,7 @@ describe("OrganizerPanel", () => {
       createElement(OrganizerPanel, {
         emptyMessage: null,
         errorBanner: null,
+        folderSection: emptyFolderSection,
         files: [
           {
             id: "file-1",
@@ -38,6 +54,7 @@ describe("OrganizerPanel", () => {
     const html = renderToStaticMarkup(
       createElement(OrganizerPanel, {
         emptyMessage: "候補カードが見つかりません。",
+        folderSection: emptyFolderSection,
         errorBanner: {
           kind: "scan_dom_missing",
           message: "File card list root was not found."
@@ -54,5 +71,29 @@ describe("OrganizerPanel", () => {
 
     expect(html).toContain('role="alert"')
     expect(html).toContain("scan_dom_missing")
+  })
+
+  it("renders a retry action for an unsaved folder change", () => {
+    const html = renderToStaticMarkup(
+      createElement(OrganizerPanel, {
+        emptyMessage: null,
+        errorBanner: null,
+        folderSection: {
+          ...emptyFolderSection,
+          storageErrorMessage: "フォルダの保存に失敗しました。",
+          canRetrySave: true
+        },
+        files: [],
+        onRescan: () => undefined,
+        onSelectFile: () => undefined,
+        routeLabel: "/drafts",
+        scanSummary: "0 files extracted / 0 skipped",
+        selectedFileId: null,
+        targetLabel: "https://www.figma.com/*"
+      })
+    )
+
+    expect(html).toContain("フォルダの保存に失敗しました。")
+    expect(html).toContain("再試行")
   })
 })
