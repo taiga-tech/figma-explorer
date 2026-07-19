@@ -931,3 +931,39 @@
   `act` 警告1件。現行 React 18 の型と既存テスト規約に合わせて変更なし）
 - Plasmo build はサンドボックス内では `Operation not permitted` になったため、同じ
   `mise run check` を承認済みのサンドボックス外実行で再確認した
+
+## Issue 016: 未分類一覧を表示する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 016（GitHub #13）を実装対象とする
+- 保存済み assignments と検出ファイルから未分類状態と件数を派生し、永続 state は増やさない
+- サマリーの「未分類」から未分類ファイルだけを表示でき、全件表示へ戻せるようにする
+- Issue 015 の分類・未分類化操作と連動し、分類直後は未分類一覧から除外し、未分類へ戻すと再表示する
+
+### 実施計画
+
+- [x] `git flow feature start issue-016-uncategorized-filter` でブランチを作成する
+- [x] Result 不要の純粋な file filter service と unit テストを追加する
+- [x] OrganizerPanel に全件／未分類フィルター操作と選択状態を追加する
+- [x] FigmaExplorerPanel で active filter、未分類件数、visible files を派生する
+- [x] 分類・未分類化後の表示更新を含む component 回帰テストを追加する
+- [x] architecture docs を現行実装へ同期する
+- [x] `mise run check`、`git diff --check`、React Doctor で検証する
+- [x] レビューと必要な教訓を追記する
+
+### レビュー
+
+- assignments を正本にした純粋な filter service を追加し、assignment がないファイルと
+  `folderId: null` のファイルだけを未分類として派生する構成にした
+- SummaryCards の全件／未分類をボタン化し、未分類件数・選択状態・disabled 状態を
+  表示した。分類直後は未分類一覧から除外され、未分類へ戻すと再表示される
+- storage の loading / error 中は分類情報が確定していないファイル一覧を隠し、誤った
+  未分類表示や hidden file の操作を防いだ。抽出失敗時の既存メッセージも維持した
+- architecture docs を filter service、表示パイプライン、SummaryCards の状態仕様へ同期した
+- 独立レビューで到達可能な blocker / high / medium finding はなし。途中レビューで
+  検出した loading / error 表示の問題は修正し、storage error の回帰テストを追加した。
+  PR 前レビューの low finding だった SummaryCards の error 状態に関する docs drift も修正した
+- `mise run check`（lint、typecheck、20ファイル・141テスト、production build）、
+  `git diff --check` が成功。React Doctor は 100/100（指摘なし）
+- 未実施: 修正版を読み込んだ実 Figma Drafts での Chrome smoke test

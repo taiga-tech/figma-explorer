@@ -84,6 +84,8 @@ figma-explorer/
 │  │  │                                  # MAX_FOLDER_DEPTH
 │  │  └─ organizer-state.ts              # PersistentState / SCHEMA_VERSION
 │  ├─ features/
+│  │  ├─ filters/
+│  │  │  └─ file-filter-service.ts       # 全件・フォルダ・未分類の派生filter
 │  │  ├─ scan/
 │  │  │  ├─ detect-drafts-page.ts
 │  │  │  ├─ detect-file-card-elements.ts
