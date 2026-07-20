@@ -228,6 +228,9 @@ type ActiveFilter =
 
 ## 13. ExportJson
 
+実装済み: `src/domain/export-json.ts`、
+`src/features/export-json/export-json-service.ts`
+
 ```ts
 type ExportJson = {
   exportedAt: string
@@ -243,6 +246,8 @@ type ExportJson = {
 
 JSONにはFigmaファイル本文を含めない。
 保存するのは、Drafts一覧から取得したメタ情報と拡張機能内の整理情報だけとする。
+現行スキャンは表示中カードの履歴を保持しないため、出力時の `firstSeenAt` と
+`lastSeenAt` には同じスナップショット日時を設定する。
 
 ## 14. 関連文書
 

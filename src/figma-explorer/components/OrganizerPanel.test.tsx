@@ -31,6 +31,14 @@ const emptyAssignmentSection: ComponentProps<
   onUnassign: () => undefined
 }
 
+const enabledExportSection: ComponentProps<
+  typeof OrganizerPanel
+>["exportSection"] = {
+  disabled: false,
+  feedback: null,
+  onExport: () => undefined
+}
+
 describe("OrganizerPanel", () => {
   it("renders summary counts and scan metadata", () => {
     const html = renderToStaticMarkup(
@@ -39,6 +47,7 @@ describe("OrganizerPanel", () => {
         assignmentSection: emptyAssignmentSection,
         emptyMessage: null,
         errorBanner: null,
+        exportSection: enabledExportSection,
         folderSection: emptyFolderSection,
         files: [
           {
@@ -67,6 +76,7 @@ describe("OrganizerPanel", () => {
     expect(html).toContain("全件")
     expect(html).toContain("未分類")
     expect(html).toContain("Detected files")
+    expect(html).toContain("JSON を出力")
   })
 
   it("renders an alert banner for scan errors", () => {
@@ -80,6 +90,7 @@ describe("OrganizerPanel", () => {
           kind: "scan_dom_missing",
           message: "File card list root was not found."
         },
+        exportSection: { ...enabledExportSection, disabled: true },
         files: [],
         onChangeFilter: () => undefined,
         onSearchQueryChange: () => undefined,
@@ -107,6 +118,7 @@ describe("OrganizerPanel", () => {
         assignmentSection: emptyAssignmentSection,
         emptyMessage: null,
         errorBanner: null,
+        exportSection: enabledExportSection,
         folderSection: {
           ...emptyFolderSection,
           storageErrorMessage: "フォルダの保存に失敗しました。",

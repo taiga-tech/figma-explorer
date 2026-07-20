@@ -149,13 +149,15 @@ const addFolder = (
 
 describe("createOrganizerFoldersStore", () => {
   it("購読開始でstorageから読み込みreadyになる", async () => {
-    const { store } = await setupReadyStore()
+    const initialState = createInitialPersistentState(NOW)
+    const { store } = await setupReadyStore(initialState)
 
     expect(store.getSnapshot()).toMatchObject({
       status: "ready",
       folders: {},
       folderTree: [],
       assignments: {},
+      state: initialState,
       storageError: null,
       canRetrySave: false
     })

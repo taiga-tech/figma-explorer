@@ -388,6 +388,24 @@ button.figma-explorer-panel__summary-card:focus-visible {
   cursor: default;
 }
 
+.figma-explorer-panel__export-description {
+  margin: 4px 0 0;
+  color: #5b6b84;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.figma-explorer-panel__export-feedback {
+  margin: 0;
+  color: #287a4b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.figma-explorer-panel__export-feedback--error {
+  color: #b42318;
+}
+
 .figma-explorer-panel__assignment {
   display: grid;
   gap: 10px;

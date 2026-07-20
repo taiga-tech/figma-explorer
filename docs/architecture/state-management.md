@@ -168,9 +168,13 @@ ViewModelを生成
 画面表示を更新
 ```
 
-現行実装では「検出→抽出→分類情報との合成→全件／未分類filter→ファイル名検索→表示」までを
+現行実装では「検出→抽出→分類情報との合成→全件／未分類filter→ファイル名検索→表示」と、
+検出ファイル全件・optimistic な整理状態からの JSON 出力までを
 `file-card-detection-store.ts`、`OrganizerFoldersStore`、`FigmaExplorerPanel` が担う。
 OrganizerApp 統合後（予定）は、合成以降を `organizer-reducer.ts` に移す。
+
+JSON 出力は表示 filter の影響を受けず、現在スキャンできている全ファイルを対象とする。
+Blob URL とダウンロード用リンクはダウンロード処理の終了時に必ず解放する。
 
 ## 8. 分類の流れ
 

@@ -181,6 +181,6 @@ pnpm test     # unit / DOM fixture テスト（Vitest）
 | `src/domain`               | 型、ドメイン定義                                           | 実装     | [data-model.md](./data-model.md)               |
 | `src/features/folders`     | 仮想フォルダ処理                                           | 実装     | [data-model.md](./data-model.md)               |
 | `src/features/filters`     | 検索、絞り込み                                             | 実装     | [state-management.md](./state-management.md)   |
-| `src/features/export-json` | JSON出力                                                   | 予定     | [data-model.md](./data-model.md)               |
+| `src/features/export-json` | JSON生成、ファイル名生成、Blobダウンロード                 | 実装     | [data-model.md](./data-model.md)               |
 | `src/storage`              | Plasmo Storage保存・移行・複数タブ排他更新                 | 実装     | [state-management.md](./state-management.md)   |
 | `src/utils/result.ts`      | Result型                                                   | 実装     | [error-handling.md](./error-handling.md)       |

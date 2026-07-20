@@ -57,3 +57,4 @@
 - `useMemo` の callback 内を status で分岐しても dependency 配列は毎レンダー無条件に評価される。nullable な派生値は dependency 側でも optional chaining し、external store の初期 `empty` / `error` snapshot をコンポーネントテストで実際にレンダーして確認する
 - mise の総合検証 task で lint・型チェック・テスト・ビルドをまとめるときは、`depends` の並列実行で1件の失敗時に他 task までキャンセルされないよう、各 task を順番に呼び出して失敗箇所と完了済み工程を明確にする
 - ユーザーが `git flow feature finish` と明示した場合は、別の cleanup コマンドへ置き換えず、状態確認後に指定された `git flow feature finish` を実行する
+- 出力 DTO へ変換するときは構造的部分型の入力をそのまま spread しない。型に現れない UI 専用プロパティも実行時 JSON へ混入するため、許可したキーを明示的にコピーする

@@ -31,6 +31,7 @@ export type OrganizerFoldersSnapshot = {
   folders: Record<FolderId, VirtualFolder>
   folderTree: FolderTreeNode[]
   assignments: PersistentState["assignments"]
+  state: PersistentState | null
   // 読み込み・保存の失敗と、破損データ退避の警告を UI 表示用に載せる
   storageError: OrganizerError | null
   canRetrySave: boolean
@@ -74,6 +75,7 @@ export const createOrganizerFoldersStore = (
     folders: {},
     folderTree: [],
     assignments: {},
+    state: null,
     storageError: null,
     canRetrySave: false
   }
@@ -107,6 +109,7 @@ export const createOrganizerFoldersStore = (
       folders: optimisticState?.folders ?? {},
       folderTree: optimisticState?.folderTree ?? [],
       assignments: optimisticState?.assignments ?? {},
+      state: optimisticState,
       storageError,
       canRetrySave: saveError !== null && pendingMutations.length > 0
     }
