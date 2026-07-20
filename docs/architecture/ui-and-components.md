@@ -7,7 +7,8 @@
 `OrganizerPanel` を表示層として、検出・抽出結果の一覧とフォルダツリー・作成 UI
 に加え、保存済み分類情報の合成、分類・未分類化 UI、JSON 出力まで提供している。
 全件／未分類フィルターは `SummaryCards`、ファイル名検索は `SearchBox` から
-操作できる。JSON 出力を統合する `OrganizerApp` は次段階で追加する。
+操作できる。FileList のキーボード選択・オープンとパネル全体の Escape 操作も
+現行コンテナへ統合済み。`OrganizerApp` は次段階で追加する。
 
 | 段階 | 内容                                                          | 状態 |
 | ---- | ------------------------------------------------------------- | ---- |
@@ -85,12 +86,12 @@ contents/figma-explorer.tsx
 
 ## 6. アクセシビリティ設計
 
-- パネル: `role="complementary"` + `aria-label`（現行の `aside` +
-  `aria-label` を踏襲）
+- パネル: `aside` の暗黙的な `complementary` role + `aria-label`
 - FolderTree: WAI-ARIA の tree パターンに従う。`role="tree"` /
   `role="treeitem"`、展開状態は `aria-expanded`、選択は `aria-selected`
-- FileList: `role="list"` / `role="listitem"`、選択中項目は
-  `aria-selected` で表現する
+- FileList: `role="list"` / `role="listitem"`、現在の選択項目は
+  `aria-current="true"` で表現する。各行に選択 button と open link があるため、
+  子の操作要素を扱えない `listbox` / `option` パターンにはしない
 - フォーカスリングを消さない。コントラストは Figma のライト/ダーク両
   テーマ上で読めることを確認する
 - アイコンのみのボタンには必ず `aria-label` を付ける
@@ -115,6 +116,14 @@ Figma 本体のショートカットへ伝播させない。パネル外のキ�
 
 v0.1 では FileList の `↑↓` / `Enter` と `Escape` を必須とし、
 残りは v0.2 で拡張する。
+
+現行実装では、選択中ファイルの選択 button だけを `tabIndex=0`、残りを
+`tabIndex=-1` とする roving tabindex を使う。`↑` / `↓` は一覧端で停止し、
+選択と DOM フォーカスを同じ行へ移す。`Enter` は選択行の既存 open link を使い、
+link 自身にフォーカスがある場合はブラウザ標準操作を重複実行しない。
+
+上記4キーは対象コンポーネント内だけで `preventDefault` / `stopPropagation` する。
+その他のキーとパネル外のイベントには干渉しない。
 
 ## 8. 状態別表示マトリクス
 

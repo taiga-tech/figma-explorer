@@ -1041,3 +1041,43 @@
 - `mise run check`（lint、typecheck、22ファイル・156テスト、production build）、
   `git diff --check` が成功。React Doctor は 100/100（指摘なし）
 - 未実施: 修正版を読み込んだ実 Figma Drafts での JSON ダウンロード smoke test
+
+## Issue 023: キーボード操作と基本アクセシビリティを実装する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 023（GitHub #28）を実装対象とする
+- FileList 内で `ArrowUp` / `ArrowDown` により選択ファイルとフォーカスを移動し、端では先頭・末尾に留める
+- FileList 内の `Enter` で選択ファイルの既存リンクを開き、リンク自身にフォーカスがある場合はブラウザ標準操作を重複させない
+- パネル内の `Escape` で検索をクリアして現在のフォーカスを解除する
+- 対象キーはパネル内にフォーカスがある場合だけ処理し、`preventDefault` / `stopPropagation` で Figma 本体のショートカットへ伝播させない。その他のキーとパネル外イベントには干渉しない
+- FileList は複数の操作要素を含むため `list` / `listitem` を維持し、選択状態は `aria-selected` ではなく現在項目を表す `aria-current` で通知する
+- パネル、FileList、FolderTree の構造ロールと主要操作要素の `focus-visible` 表示を確認・補完する
+
+### 実施計画
+
+- [x] `git flow feature start issue-023-keyboard-accessibility` でブランチを作成する
+- [x] FileList に roving tabindex、矢印移動、Enter 操作、フォーカス追従を実装する
+- [x] OrganizerPanel に Escape の検索クリア・フォーカス解除・イベント伝播防止を実装する
+- [x] ARIA 状態と focus-visible スタイルを補正する
+- [x] FileList / OrganizerPanel の interaction test と非干渉テストを追加する
+- [x] architecture docs を現行実装と WAI-ARIA の構造へ同期する
+- [x] `mise run check`、`git diff --check`、React Doctor で検証する
+- [x] レビューと必要な教訓を追記する
+
+### レビュー
+
+- FileList の選択 button を roving tabindex にし、`ArrowUp` / `ArrowDown` で一覧端を
+  越えずに選択と DOM フォーカスを移動するようにした。`Enter` は選択行の既存 open
+  link を使い、link 自身の標準 Enter 操作とは重複しない
+- OrganizerPanel の `Escape` はパネル内から発火した場合だけ検索をクリアして対象要素を
+  blur し、対象4キーだけを Figma 本体へ伝播させない。対象外キーとパネル外イベントの
+  非干渉を interaction test で確認した
+- 複数操作を含む FileList は `list` / `listitem` を維持し、無効な `aria-selected` を
+  `aria-current` へ置き換えた。`aside` の暗黙的 complementary role と FolderTree の
+  tree semantics を維持し、主要操作へ `focus-visible` ring を追加した
+- 独立レビューで blocker / high / medium finding はなし。React Doctor が検出した
+  冗長な `aside` role と今回追加テストの旧 `act` import を修正した
+- `mise run check`（lint、typecheck、22ファイル・161テスト、production build）、
+  `git diff --check` が成功。React Doctor は 92/100（指摘なし）
+- 未実施: 修正版を読み込んだ実 Figma Drafts でのキーボード操作 smoke test

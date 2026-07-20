@@ -42,6 +42,7 @@ Figma DOM 依存部分の壊れやすさをテストで補う。ピラミッド�
 | migration チェーン（予定）         | unit        | 旧→新の変換、将来バージョン・破損の分岐          |
 | folder / filter サービス           | unit        | 循環禁止、階層上限、検索、絞り込み               |
 | export サービス                    | unit        | ExportJson 形式、Blob URL 解放、失敗の Result 化 |
+| FileList / OrganizerPanel          | component   | 矢印・Enter・Escape、focus、イベント非干渉       |
 | resolve-file-card-route-from-fiber | 対象外      | MAIN world 依存のため自動化不能（§5 で担保）     |
 
 fiber 探索は jsdom 上で React 内部構造を再現できないため自動テストしない。

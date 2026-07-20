@@ -218,6 +218,18 @@
   outline-offset: 2px;
 }
 
+.figma-explorer-panel__rescan-button:focus-visible,
+.figma-explorer-panel__search-clear:focus-visible,
+.figma-explorer-panel__section-action:focus-visible,
+.figma-explorer-panel__file-select:focus-visible,
+.figma-explorer-panel__file-open-link:focus-visible,
+.figma-explorer-panel__assignment-button:focus-visible,
+.figma-explorer-folder-tree__toggle:focus-visible,
+.figma-explorer-folder-tree__name:focus-visible {
+  outline: 2px solid #132238;
+  outline-offset: 2px;
+}
+
 .figma-explorer-panel__search-clear {
   padding: 8px 12px;
   border: 1px solid rgba(19, 34, 56, 0.2);
