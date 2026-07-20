@@ -1,6 +1,8 @@
 import { createElement, type ComponentProps } from "react"
+import { flushSync } from "react-dom"
+import { createRoot } from "react-dom/client"
 import { renderToStaticMarkup } from "react-dom/server"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { OrganizerPanel } from "./OrganizerPanel"
 
@@ -72,6 +74,8 @@ describe("OrganizerPanel", () => {
     )
 
     expect(html).toContain("Organizer Panel")
+    expect(html).toContain("<aside")
+    expect(html).toContain('role="list"')
     expect(html).toContain("1 files extracted / 0 skipped")
     expect(html).toContain("全件")
     expect(html).toContain("未分類")
@@ -141,5 +145,76 @@ describe("OrganizerPanel", () => {
 
     expect(html).toContain("フォルダの保存に失敗しました。")
     expect(html).toContain("再試行")
+  })
+
+  it("パネル内のEscapeで検索をクリアしてフォーカスと伝播を止める", () => {
+    const outer = document.createElement("div")
+    const container = document.createElement("div")
+    const outsideButton = document.createElement("button")
+    const onSearchQueryChange = vi.fn()
+    const onOuterKeyDown = vi.fn()
+
+    outsideButton.textContent = "Outside"
+    outer.append(container, outsideButton)
+    outer.addEventListener("keydown", onOuterKeyDown)
+    document.body.append(outer)
+    const root = createRoot(container)
+
+    flushSync(() => {
+      root.render(
+        <OrganizerPanel
+          activeFilter={{ type: "all" }}
+          assignmentSection={emptyAssignmentSection}
+          emptyMessage={null}
+          errorBanner={null}
+          exportSection={enabledExportSection}
+          files={[]}
+          folderSection={emptyFolderSection}
+          onChangeFilter={() => undefined}
+          onRescan={() => undefined}
+          onSearchQueryChange={onSearchQueryChange}
+          onSelectFile={() => undefined}
+          routeLabel="/drafts"
+          scanSummary="0 files extracted / 0 skipped"
+          searchQuery="Dashboard"
+          selectedFileId={null}
+          targetLabel="https://www.figma.com/*"
+          totalCount={0}
+          uncategorizedCount={0}
+        />
+      )
+    })
+
+    const searchInput =
+      container.querySelector<HTMLInputElement>('[role="searchbox"]')
+    const panelEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true
+    })
+
+    searchInput?.focus()
+    flushSync(() => searchInput?.dispatchEvent(panelEvent))
+
+    expect(panelEvent.defaultPrevented).toBe(true)
+    expect(onSearchQueryChange).toHaveBeenCalledOnce()
+    expect(onSearchQueryChange).toHaveBeenCalledWith("")
+    expect(document.activeElement).not.toBe(searchInput)
+    expect(onOuterKeyDown).not.toHaveBeenCalled()
+
+    const outsideEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true
+    })
+
+    flushSync(() => outsideButton.dispatchEvent(outsideEvent))
+
+    expect(outsideEvent.defaultPrevented).toBe(false)
+    expect(onSearchQueryChange).toHaveBeenCalledOnce()
+    expect(onOuterKeyDown).toHaveBeenCalledOnce()
+
+    flushSync(() => root.unmount())
+    outer.remove()
   })
 })

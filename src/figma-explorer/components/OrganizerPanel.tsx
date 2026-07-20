@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react"
+import type { ComponentProps, KeyboardEvent } from "react"
 
 import type { ActiveFilter } from "../../domain/organizer-state"
 import type { OrganizerErrorKind } from "../../utils/result"
@@ -57,11 +57,29 @@ export function OrganizerPanel({
   onChangeFilter,
   onSearchQueryChange
 }: OrganizerPanelProps) {
+  const handlePanelKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Escape") {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (searchQuery.length > 0) {
+      onSearchQueryChange("")
+    }
+
+    if (event.target instanceof HTMLElement) {
+      event.target.blur()
+    }
+  }
+
   return (
     <div className="figma-explorer-shell">
       <aside
         aria-label="Figma Explorer organizer panel"
-        className="figma-explorer-panel">
+        className="figma-explorer-panel"
+        onKeyDown={handlePanelKeyDown}>
         <PanelHeader onRescan={onRescan} visibleCount={files.length} />
 
         {errorBanner && (
