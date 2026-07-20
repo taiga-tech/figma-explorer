@@ -7,6 +7,7 @@ import { FileList } from "./FileList"
 import { FolderSection } from "./FolderSection"
 import type { OrganizerFileListItem } from "./organizer-panel-types"
 import { PanelHeader } from "./PanelHeader"
+import { SearchBox } from "./SearchBox"
 import { SummaryCards } from "./SummaryCards"
 
 type OrganizerPanelProps = {
@@ -17,6 +18,8 @@ type OrganizerPanelProps = {
   totalCount: number
   uncategorizedCount: number | null
   activeFilter: ActiveFilter
+  searchQuery: string
+  searchDisabled?: boolean
   selectedFileId: string | null
   emptyMessage: string | null
   errorBanner: {
@@ -28,6 +31,7 @@ type OrganizerPanelProps = {
   onRescan: () => void
   onSelectFile: (fileId: string) => void
   onChangeFilter: (filter: ActiveFilter) => void
+  onSearchQueryChange: (query: string) => void
 }
 
 export function OrganizerPanel({
@@ -38,6 +42,8 @@ export function OrganizerPanel({
   totalCount,
   uncategorizedCount,
   activeFilter,
+  searchQuery,
+  searchDisabled,
   selectedFileId,
   emptyMessage,
   errorBanner,
@@ -45,7 +51,8 @@ export function OrganizerPanel({
   assignmentSection,
   onRescan,
   onSelectFile,
-  onChangeFilter
+  onChangeFilter,
+  onSearchQueryChange
 }: OrganizerPanelProps) {
   return (
     <div className="figma-explorer-shell">
@@ -95,6 +102,12 @@ export function OrganizerPanel({
             </div>
           </dl>
         </section>
+
+        <SearchBox
+          disabled={searchDisabled}
+          onQueryChange={onSearchQueryChange}
+          query={searchQuery}
+        />
 
         <SummaryCards
           activeFilter={activeFilter}

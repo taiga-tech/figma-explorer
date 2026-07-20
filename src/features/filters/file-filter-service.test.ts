@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import type { FileAssignment } from "../../domain/organizer-state"
-import { countUncategorizedFiles, filterFiles } from "./file-filter-service"
+import {
+  countUncategorizedFiles,
+  filterFiles,
+  searchFilesByName
+} from "./file-filter-service"
 
 const files = [
   { id: "file-1", name: "Dashboard" },
@@ -43,5 +47,19 @@ describe("file filter service", () => {
         folderId: "folder-design"
       }).map((file) => file.id)
     ).toEqual(["file-1"])
+  })
+
+  it("ファイル名を大文字小文字を区別せず部分一致で検索する", () => {
+    expect(searchFilesByName(files, "BOARD").map((file) => file.id)).toEqual([
+      "file-1"
+    ])
+    expect(searchFilesByName(files, "ING").map((file) => file.id)).toEqual([
+      "file-2",
+      "file-3"
+    ])
+  })
+
+  it("空白だけの検索では入力順の全ファイルを返す", () => {
+    expect(searchFilesByName(files, "   ")).toEqual(files)
   })
 })

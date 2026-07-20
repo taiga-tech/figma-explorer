@@ -5,6 +5,10 @@ type FilterableFile = {
   id: FileId
 }
 
+type SearchableFile = FilterableFile & {
+  name: string
+}
+
 const isUncategorized = (
   fileId: FileId,
   assignments: Readonly<Record<FileId, FileAssignment>>
@@ -32,3 +36,18 @@ export const countUncategorizedFiles = (
   assignments: Readonly<Record<FileId, FileAssignment>>
 ): number =>
   files.filter((file) => isUncategorized(file.id, assignments)).length
+
+export const searchFilesByName = <T extends SearchableFile>(
+  files: readonly T[],
+  query: string
+): T[] => {
+  const normalizedQuery = query.trim().toLowerCase()
+
+  if (normalizedQuery.length === 0) {
+    return [...files]
+  }
+
+  return files.filter((file) =>
+    file.name.toLowerCase().includes(normalizedQuery)
+  )
+}

@@ -69,8 +69,8 @@ figma-explorer/
 │  │  ├─ figma-explorer.tsx              # isolated world: UI注入 entry
 │  │  └─ figma-file-route-bridge.ts      # MAIN world: fiberからURL解決
 │  ├─ figma-explorer/
-│  │  ├─ components/                     # OrganizerPanel / FolderTree /
-│  │  │                                  # FileList ほか（FigmaExplorerPanel
+│  │  ├─ components/                     # OrganizerPanel / SearchBox /
+│  │  │                                  # FolderTree / FileList ほか（FigmaExplorerPanel
 │  │  │                                  # はコンテナとして残存）
 │  │  ├─ constants/
 │  │  ├─ formatters/
@@ -85,7 +85,7 @@ figma-explorer/
 │  │  └─ organizer-state.ts              # PersistentState / SCHEMA_VERSION
 │  ├─ features/
 │  │  ├─ filters/
-│  │  │  └─ file-filter-service.ts       # 全件・フォルダ・未分類の派生filter
+│  │  │  └─ file-filter-service.ts       # 全件・フォルダ・未分類filter + 名前検索
 │  │  ├─ scan/
 │  │  │  ├─ detect-drafts-page.ts
 │  │  │  ├─ detect-file-card-elements.ts
@@ -180,7 +180,7 @@ pnpm test     # unit / DOM fixture テスト（Vitest）
 | `src/components`           | React UI（現状は `src/figma-explorer/components/` に実装） | 一部実装 | [ui-and-components.md](./ui-and-components.md) |
 | `src/domain`               | 型、ドメイン定義                                           | 実装     | [data-model.md](./data-model.md)               |
 | `src/features/folders`     | 仮想フォルダ処理                                           | 実装     | [data-model.md](./data-model.md)               |
-| `src/features/filters`     | 検索、絞り込み                                             | 予定     | [state-management.md](./state-management.md)   |
+| `src/features/filters`     | 検索、絞り込み                                             | 実装     | [state-management.md](./state-management.md)   |
 | `src/features/export-json` | JSON出力                                                   | 予定     | [data-model.md](./data-model.md)               |
 | `src/storage`              | Plasmo Storage保存・移行・複数タブ排他更新                 | 実装     | [state-management.md](./state-management.md)   |
 | `src/utils/result.ts`      | Result型                                                   | 実装     | [error-handling.md](./error-handling.md)       |

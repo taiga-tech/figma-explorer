@@ -967,3 +967,41 @@
 - `mise run check`（lint、typecheck、20ファイル・141テスト、production build）、
   `git diff --check` が成功。React Doctor は 100/100（指摘なし）
 - 未実施: 修正版を読み込んだ実 Figma Drafts での Chrome smoke test
+
+## Issue 017: ファイル名検索を実装する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 017（GitHub #18）を実装対象とする
+- 検索文字列は `FigmaExplorerPanel` のメモリ上の UI state として保持し、永続 state は増やさない
+- ファイル名を大文字小文字を区別せず部分一致で検索し、全件／未分類filterと組み合わせる
+- 検索結果件数を既存の「表示中」件数へ反映し、検索条件を明示操作でクリアできるようにする
+- 空白だけの検索は未指定として扱い、検索結果0件では専用の空状態を表示する
+
+### 実施計画
+
+- [x] `git flow feature start issue-017-file-name-search` でブランチを作成する
+- [x] file filter service に大文字小文字を区別しない名前検索と unit テストを追加する
+- [x] controlled な SearchBox と component テストを追加する
+- [x] FigmaExplorerPanel へ検索 state と filter 合成を実装する
+- [x] 検索、未分類filter、分類操作の組み合わせを回帰テストする
+- [x] architecture docs を現行実装へ同期する
+- [x] `mise run check`、`git diff --check`、React Doctor で検証する
+- [x] レビューと必要な教訓を追記する
+
+### レビュー
+
+- `searchFilesByName` を既存の全件／未分類filterの後段へ合成し、空白だけの検索を
+  未指定として扱いながら、大文字小文字を区別しない部分一致検索を実装した
+- controlled な `SearchBox` を追加し、明示的なクリア操作、`role="searchbox"`、
+  `aria-label`、disabled / focus-visible 状態を用意した
+- 検索結果件数を PanelHeader、SummaryCards の「表示中」、FileList の件数へ反映し、
+  0件では専用メッセージを表示する。検索 state は永続化せずコンテナ内だけに保持する
+- component 回帰テストで検索、大小文字、クリア、未分類filterとのAND合成、0件表示、
+  検索で選択が切り替わった後の分類対象FileIdまで確認した
+- 独立レビューで blocker / high / medium finding はなし。scan error時も検索可能だった
+  low findingを修正し、実コンテナ経由の回帰テストを追加した
+- architecture docs を SearchBox、検索パイプライン、filter service の実装状態へ同期した
+- `mise run check`（lint、typecheck、21ファイル・147テスト、production build）、
+  `git diff --check` が成功。React Doctor は 100/100（指摘なし）
+- 未実施: 修正版を読み込んだ実 Figma Drafts での Chrome smoke test
