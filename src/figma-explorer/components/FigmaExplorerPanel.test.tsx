@@ -24,7 +24,16 @@ const mocks = vi.hoisted(() => ({
     storageError: null,
     canRetrySave: false
   } as Record<string, unknown>,
-  assignFile: vi.fn()
+  assignFile: vi.fn(),
+  createExportDraftFiles: vi.fn(),
+  createExportJsonArtifact: vi.fn(),
+  downloadExportJson: vi.fn()
+}))
+
+vi.mock("../../features/export-json/export-json-service", () => ({
+  createExportDraftFiles: mocks.createExportDraftFiles,
+  createExportJsonArtifact: mocks.createExportJsonArtifact,
+  downloadExportJson: mocks.downloadExportJson
 }))
 
 vi.mock("../hooks/use-file-card-detection", () => ({
@@ -67,6 +76,19 @@ describe("FigmaExplorerPanel", () => {
       canRetrySave: false
     }
     mocks.assignFile.mockClear()
+    mocks.createExportDraftFiles.mockReset()
+    mocks.createExportDraftFiles.mockReturnValue([])
+    mocks.createExportJsonArtifact.mockReset()
+    mocks.createExportJsonArtifact.mockReturnValue({
+      ok: true,
+      value: {
+        data: {},
+        fileName: "figma-explorer-export.json",
+        json: "{}\n"
+      }
+    })
+    mocks.downloadExportJson.mockReset()
+    mocks.downloadExportJson.mockReturnValue({ ok: true, value: undefined })
   })
 
   it("ファイル抽出前のempty状態でも初回レンダーできる", () => {
@@ -103,6 +125,173 @@ describe("FigmaExplorerPanel", () => {
     expect(html).toContain("分類情報を読み込んでいます…")
     expect(uncategorizedButton?.disabled).toBe(true)
     expect(uncategorizedButton?.textContent).toContain("-")
+  })
+
+  it("保存状態とスキャン情報をJSON出力し成功を通知する", () => {
+    mocks.detectionResult = { status: "success", elements: [] }
+    mocks.extractedFiles = {
+      files: [
+        {
+          name: "Dashboard",
+          url: "https://www.figma.com/file/AbC123/Dashboard"
+        }
+      ],
+      skippedCount: 0,
+      totalCount: 1
+    }
+    const state = {
+      schemaVersion: 1,
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      settings: {
+        panelPosition: "right",
+        panelWidth: 360,
+        autoScan: true,
+        showFirstRunNotice: true
+      },
+      meta: {
+        createdAt: "2026-07-20T00:00:00.000Z",
+        updatedAt: "2026-07-20T00:00:00.000Z"
+      }
+    }
+    mocks.organizerFolders = {
+      status: "ready",
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      state,
+      storageError: null,
+      canRetrySave: false
+    }
+    const container = document.createElement("div")
+    const root = createRoot(container)
+
+    act(() => {
+      root.render(
+        <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+      )
+    })
+
+    const exportButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "JSON を出力"
+    )
+
+    expect(exportButton?.disabled).toBe(false)
+
+    act(() => exportButton?.click())
+
+    expect(mocks.createExportDraftFiles).toHaveBeenCalledWith(
+      [
+        {
+          id: "AbC123",
+          name: "Dashboard",
+          url: "https://www.figma.com/file/AbC123/Dashboard",
+          folderName: null
+        }
+      ],
+      expect.any(String)
+    )
+    expect(mocks.createExportJsonArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({ appVersion: "0.0.1", state })
+    )
+    expect(mocks.downloadExportJson).toHaveBeenCalled()
+    expect(container.textContent).toContain(
+      "figma-explorer-export.json を出力しました。"
+    )
+
+    act(() => root.unmount())
+  })
+
+  it("JSONダウンロード失敗を通知する", () => {
+    mocks.detectionResult = { status: "empty", elements: [] }
+    mocks.organizerFolders = {
+      status: "ready",
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      state: {
+        schemaVersion: 1,
+        folders: {},
+        folderTree: [],
+        assignments: {},
+        settings: {
+          panelPosition: "right",
+          panelWidth: 360,
+          autoScan: true,
+          showFirstRunNotice: true
+        },
+        meta: {
+          createdAt: "2026-07-20T00:00:00.000Z",
+          updatedAt: "2026-07-20T00:00:00.000Z"
+        }
+      },
+      storageError: null,
+      canRetrySave: false
+    }
+    mocks.downloadExportJson.mockReturnValue({
+      ok: false,
+      error: { kind: "export_failed", message: "blocked" }
+    })
+    const container = document.createElement("div")
+    const root = createRoot(container)
+
+    act(() => {
+      root.render(
+        <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+      )
+    })
+
+    const exportButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "JSON を出力"
+    )
+
+    act(() => exportButton?.click())
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      "JSON出力に失敗しました。"
+    )
+
+    act(() => root.unmount())
+  })
+
+  it("候補カードのメタデータを全件抽出できない場合はJSON出力を無効にする", () => {
+    mocks.detectionResult = { status: "success", elements: [] }
+    mocks.extractedFiles = { files: [], skippedCount: 1, totalCount: 1 }
+    mocks.organizerFolders = {
+      status: "ready",
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      state: {
+        schemaVersion: 1,
+        folders: {},
+        folderTree: [],
+        assignments: {},
+        settings: {
+          panelPosition: "right",
+          panelWidth: 360,
+          autoScan: true,
+          showFirstRunNotice: true
+        },
+        meta: {
+          createdAt: "2026-07-20T00:00:00.000Z",
+          updatedAt: "2026-07-20T00:00:00.000Z"
+        }
+      },
+      storageError: null,
+      canRetrySave: false
+    }
+    const html = renderToStaticMarkup(
+      <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+    )
+
+    document.body.innerHTML = html
+    const exportButton = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent === "JSON を出力")
+
+    expect(exportButton?.disabled).toBe(true)
   })
 
   it("分類情報の読み込み失敗を進行中表示にしない", () => {

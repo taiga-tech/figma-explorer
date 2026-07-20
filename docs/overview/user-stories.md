@@ -115,7 +115,7 @@ Drafts内のファイルを整理したいユーザーとして、ファイル�
 - フォルダ一覧をJSONに含める
 - ファイルごとの分類情報をJSONに含める
 - 出力日時を含める
-- stateVersionを含める
+- schemaVersionを含める
 - Figmaファイル本文を含めない
 
 ### US-011 FigmaのDOM変更に備える

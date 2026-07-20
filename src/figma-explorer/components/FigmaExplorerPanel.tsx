@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react"
 
+import packageMetadata from "../../../package.json"
 import type { FolderId } from "../../domain/folder"
 import type { ActiveFilter } from "../../domain/organizer-state"
+import {
+  createExportDraftFiles,
+  createExportJsonArtifact,
+  downloadExportJson
+} from "../../features/export-json/export-json-service"
 import {
   countUncategorizedFiles,
   filterFiles,
@@ -43,6 +49,10 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
     type: "all"
   })
   const [searchQuery, setSearchQuery] = useState("")
+  const [exportFeedback, setExportFeedback] = useState<{
+    kind: "success" | "error"
+    message: string
+  } | null>(null)
   const [selectedFolderId, setSelectedFolderId] = useState<FolderId | null>(
     null
   )
@@ -180,6 +190,53 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
     return emptyMessage
   })()
 
+  const canExport =
+    organizerFolders.status === "ready" &&
+    organizerFolders.state != null &&
+    fileCardDetectionResult.status !== "error" &&
+    !(
+      extractedFileCards !== null &&
+      extractedFileCards.totalCount > 0 &&
+      extractedFileCards.files.length === 0
+    )
+
+  const exportOrganizerState = () => {
+    if (!canExport || organizerFolders.state === null) {
+      return
+    }
+
+    const exportedAt = new Date().toISOString()
+    const artifactResult = createExportJsonArtifact({
+      appVersion: packageMetadata.version,
+      exportedAt,
+      files: createExportDraftFiles(organizerFiles, exportedAt),
+      state: organizerFolders.state
+    })
+
+    if (artifactResult.ok === false) {
+      setExportFeedback({
+        kind: "error",
+        message: "JSON出力に失敗しました。もう一度お試しください。"
+      })
+      return
+    }
+
+    const downloadResult = downloadExportJson(artifactResult.value)
+
+    if (downloadResult.ok === false) {
+      setExportFeedback({
+        kind: "error",
+        message: "JSON出力に失敗しました。もう一度お試しください。"
+      })
+      return
+    }
+
+    setExportFeedback({
+      kind: "success",
+      message: `${artifactResult.value.fileName} を出力しました。`
+    })
+  }
+
   return (
     <OrganizerPanel
       activeFilter={displayedFilter}
@@ -219,6 +276,11 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
           : null
       }
       files={displayedFiles}
+      exportSection={{
+        disabled: !canExport,
+        feedback: exportFeedback,
+        onExport: exportOrganizerState
+      }}
       folderSection={{
         status: organizerFolders.status,
         folders: organizerFolders.folders,

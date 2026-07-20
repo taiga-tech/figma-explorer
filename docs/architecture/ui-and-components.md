@@ -5,17 +5,17 @@
 現行実装は
 `src/figma-explorer/components/FigmaExplorerPanel.tsx` をコンテナ、
 `OrganizerPanel` を表示層として、検出・抽出結果の一覧とフォルダツリー・作成 UI
-に加え、保存済み分類情報の合成と分類・未分類化 UI まで提供している。
+に加え、保存済み分類情報の合成、分類・未分類化 UI、JSON 出力まで提供している。
 全件／未分類フィルターは `SummaryCards`、ファイル名検索は `SearchBox` から
 操作できる。JSON 出力を統合する `OrganizerApp` は次段階で追加する。
 
-| 段階 | 内容                                                          | 状態   |
-| ---- | ------------------------------------------------------------- | ------ |
-| 1    | `OrganizerPanel` とフォルダ UI を FigmaExplorerPanel から接続 | 完了   |
-| 2    | FigmaExplorerPanel で Storage と DraftFile の分類情報を合成   | 完了   |
-| 3    | SummaryCards から全件／未分類フィルターを切り替え             | 完了   |
-| 4    | SearchBox から大文字小文字を区別しない名前検索                | 完了   |
-| 5    | `OrganizerApp` へ JSON 出力を統合                             | 未実装 |
+| 段階 | 内容                                                          | 状態 |
+| ---- | ------------------------------------------------------------- | ---- |
+| 1    | `OrganizerPanel` とフォルダ UI を FigmaExplorerPanel から接続 | 完了 |
+| 2    | FigmaExplorerPanel で Storage と DraftFile の分類情報を合成   | 完了 |
+| 3    | SummaryCards から全件／未分類フィルターを切り替え             | 完了 |
+| 4    | SearchBox から大文字小文字を区別しない名前検索                | 完了 |
+| 5    | 現行コンテナへ JSON 出力を統合                                | 完了 |
 
 ## 2. 画面構成
 
@@ -78,6 +78,7 @@ contents/figma-explorer.tsx
       │  └─ FolderTree
       │     └─ FolderTreeItem
       ├─ FileAssignmentSection
+      ├─ ExportSection
       └─ FileList
          └─ FileListItem
 ```
@@ -249,7 +250,20 @@ URLを開く操作
 | クリック | 選択                |
 | 開く     | Figmaファイルを開く |
 
-## 17. FirstRunNotice
+## 17. ExportSection
+
+表示:
+
+- 現在スキャンできているファイル情報と保存済み整理状態を JSON 出力するボタン
+- 出力成功時のファイル名、または `export_failed` のエラー表示
+
+動作:
+
+- 保存状態の読み込み中・失敗中、またはスキャン失敗中は出力を無効にする
+- 全件／未分類 filter と検索条件に関係なく、スキャン済み全ファイルを出力する
+- Figma ファイル本文は出力しない
+
+## 18. FirstRunNotice
 
 表示内容:
 
@@ -259,7 +273,7 @@ Figma上のファイル移動、削除、権限変更は行いません。
 分類情報はこのブラウザのローカル保存領域に保存されます。
 ```
 
-## 18. ErrorBanner
+## 19. ErrorBanner
 
 エラー分類（[error-handling.md](./error-handling.md) §3 の kind）と
 表示の対応:
@@ -277,7 +291,7 @@ Figma上のファイル移動、削除、権限変更は行いません。
 
 取得0件はエラーではなく、空状態として扱う（§8）。
 
-## 19. 関連文書
+## 20. 関連文書
 
 - [error-handling.md](./error-handling.md) — エラー分類・表示原則の正本
 - [state-management.md](./state-management.md) — ストアと ViewModel

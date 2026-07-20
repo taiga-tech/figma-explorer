@@ -1005,3 +1005,39 @@
 - `mise run check`（lint、typecheck、21ファイル・147テスト、production build）、
   `git diff --check` が成功。React Doctor は 100/100（指摘なし）
 - 未実施: 修正版を読み込んだ実 Figma Drafts での Chrome smoke test
+
+## Issue 018: JSON出力形式とダウンロードを実装する
+
+### 仕様
+
+- `docs/project/github-issues-v0.1.md` の Issue 018（GitHub #15）を実装対象とする
+- `ExportJson` は現在スキャンできているファイルメタ情報、仮想フォルダ、ツリー、分類、設定を含み、Figma ファイル本文は含めない
+- JSON 生成とファイル名生成は Result 形式のサービスへ閉じ込め、日時とアプリバージョンを呼び出し側から注入して再現可能にする
+- ダウンロードは Blob と一時 object URL を使い、成功後は URL と一時要素を必ず解放する
+- 保存状態またはスキャンが利用できない間は出力操作を無効にし、失敗時は `export_failed` のユーザー向け表示を行う
+
+### 実施計画
+
+- [x] `git flow feature start issue-018-json-export` でブランチを作成する
+- [x] `ExportJson` 型、JSON 生成・ファイル名生成・ダウンロードサービスと unit テストを追加する
+- [x] 検出済みファイルを `DraftFile` の出力形式へ変換し、OrganizerPanel に出力 UI を統合する
+- [x] 出力可否、成功、失敗表示を component 回帰テストで確認する
+- [x] architecture docs を現行実装へ同期する
+- [x] `mise run check`、`git diff --check`、React Doctor で検証する
+- [x] レビューと必要な教訓を追記する
+
+### レビュー
+
+- `ExportJson` と Result 形式の export service を追加し、日時・アプリバージョン・
+  スキャン済みファイル・フォルダ・ツリー・分類・設定から整形済み JSON と安定した
+  ファイル名を生成するようにした。Figma ファイル本文と UI 専用プロパティは含めない
+- Blob と object URL、一時リンクを使うダウンロード境界を追加し、成功・クリック失敗・
+  URL 解放失敗のすべてでリソース解放と `export_failed` への変換を確認した
+- OrganizerFoldersStore の optimistic state 全体を snapshot へ公開し、検索・未分類 filter
+  に左右されないスキャン全件を ExportSection から出力する。読み込み・スキャン失敗中と、
+  候補カード全件のメタデータ抽出失敗中は操作を無効にした
+- 独立レビューの blocker / high finding はなし。全件抽出失敗でも空 JSON を出力できる
+  medium finding と、出力対象の文言・`stateVersion` 表記の low finding を修正した
+- `mise run check`（lint、typecheck、22ファイル・156テスト、production build）、
+  `git diff --check` が成功。React Doctor は 100/100（指摘なし）
+- 未実施: 修正版を読み込んだ実 Figma Drafts での JSON ダウンロード smoke test

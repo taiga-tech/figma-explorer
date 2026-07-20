@@ -2,6 +2,7 @@ import type { ComponentProps } from "react"
 
 import type { ActiveFilter } from "../../domain/organizer-state"
 import type { OrganizerErrorKind } from "../../utils/result"
+import { ExportSection } from "./ExportSection"
 import { FileAssignmentSection } from "./FileAssignmentSection"
 import { FileList } from "./FileList"
 import { FolderSection } from "./FolderSection"
@@ -28,6 +29,7 @@ type OrganizerPanelProps = {
   } | null
   folderSection: ComponentProps<typeof FolderSection>
   assignmentSection: ComponentProps<typeof FileAssignmentSection>
+  exportSection: ComponentProps<typeof ExportSection>
   onRescan: () => void
   onSelectFile: (fileId: string) => void
   onChangeFilter: (filter: ActiveFilter) => void
@@ -49,6 +51,7 @@ export function OrganizerPanel({
   errorBanner,
   folderSection,
   assignmentSection,
+  exportSection,
   onRescan,
   onSelectFile,
   onChangeFilter,
@@ -120,6 +123,8 @@ export function OrganizerPanel({
         <FolderSection {...folderSection} />
 
         <FileAssignmentSection {...assignmentSection} />
+
+        <ExportSection {...exportSection} />
 
         <section className="figma-explorer-panel__section figma-explorer-panel__section--file-list">
           <div className="figma-explorer-panel__section-heading">
