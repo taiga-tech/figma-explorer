@@ -4,7 +4,8 @@ import type { FolderId } from "../../domain/folder"
 import type { ActiveFilter } from "../../domain/organizer-state"
 import {
   countUncategorizedFiles,
-  filterFiles
+  filterFiles,
+  searchFilesByName
 } from "../../features/filters/file-filter-service"
 import { createFileId } from "../../features/scan/create-file-id"
 import { toOrganizerScanError } from "../../features/scan/detect-file-card-elements"
@@ -41,6 +42,7 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>({
     type: "all"
   })
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedFolderId, setSelectedFolderId] = useState<FolderId | null>(
     null
   )
@@ -96,11 +98,12 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
   const displayedFilter: ActiveFilter = assignmentsReady
     ? activeFilter
     : { type: "all" }
-  const visibleFiles = filterFiles(
+  const filteredFiles = filterFiles(
     organizerFiles,
     organizerFolders.assignments,
     displayedFilter
   )
+  const visibleFiles = searchFilesByName(filteredFiles, searchQuery)
   const displayedFiles = assignmentsReady ? visibleFiles : []
 
   const resolvedSelectedFileId =
@@ -154,6 +157,15 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
 
     if (organizerFolders.status === "error" && organizerFiles.length > 0) {
       return "分類情報を読み込めないため、ファイル一覧を表示できません。"
+    }
+
+    if (
+      fileCardDetectionResult.status === "success" &&
+      searchQuery.trim().length > 0 &&
+      displayedFiles.length === 0 &&
+      emptyMessage === null
+    ) {
+      return "検索条件に一致するファイルはありません。"
     }
 
     if (
@@ -231,9 +243,12 @@ export function FigmaExplorerPanel({ href }: FigmaExplorerPanelProps) {
       }}
       onRescan={rescanFileCards}
       onChangeFilter={setActiveFilter}
+      onSearchQueryChange={setSearchQuery}
       onSelectFile={setSelectedFileId}
       routeLabel={formatHrefPathname(href)}
       scanSummary={scanSummary}
+      searchDisabled={scanError !== null || organizerFolders.status === "error"}
+      searchQuery={searchQuery}
       selectedFileId={resolvedSelectedFileId}
       targetLabel={FIGMA_MATCHES.join(", ")}
       totalCount={organizerFiles.length}

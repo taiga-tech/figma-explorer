@@ -196,6 +196,52 @@
   gap: 10px;
 }
 
+.figma-explorer-panel__search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.figma-explorer-panel__search-input {
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(19, 34, 56, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #132238;
+  font: inherit;
+  font-size: 13px;
+}
+
+.figma-explorer-panel__search-input:focus-visible {
+  outline: 2px solid #132238;
+  outline-offset: 2px;
+}
+
+.figma-explorer-panel__search-clear {
+  padding: 8px 12px;
+  border: 1px solid rgba(19, 34, 56, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #132238;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.figma-explorer-panel__search-clear:hover:enabled {
+  border-color: #132238;
+  background: #132238;
+  color: #f8fbff;
+}
+
+.figma-explorer-panel__search-clear:disabled,
+.figma-explorer-panel__search-input:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 .figma-explorer-panel__summary-card {
   padding: 12px 14px;
   border: 1px solid transparent;

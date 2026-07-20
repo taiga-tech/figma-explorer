@@ -3,13 +3,14 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { act } from "react-dom/test-utils"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { DetectFileCardElementsResult } from "../../features/scan/detect-file-card-elements"
 import { FigmaExplorerPanel } from "./FigmaExplorerPanel"
 
 const mocks = vi.hoisted(() => ({
-  detectionResult: { status: "empty", elements: [] } as {
-    status: "empty" | "success"
-    elements: Element[]
-  },
+  detectionResult: {
+    status: "empty",
+    elements: []
+  } as DetectFileCardElementsResult,
   extractedFiles: {
     files: [] as { name: string; url: string }[],
     skippedCount: 0,
@@ -138,6 +139,33 @@ describe("FigmaExplorerPanel", () => {
     expect(html).not.toContain("Dashboard")
   })
 
+  it("スキャン失敗中は検索欄を無効にする", () => {
+    mocks.detectionResult = {
+      status: "error",
+      elements: [],
+      reason: "file_card_list_not_found",
+      message: "File card list root was not found."
+    }
+    mocks.organizerFolders = {
+      status: "ready",
+      folders: {},
+      folderTree: [],
+      assignments: {},
+      storageError: null,
+      canRetrySave: false
+    }
+    const html = renderToStaticMarkup(
+      <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+    )
+
+    document.body.innerHTML = html
+
+    expect(
+      document.querySelector<HTMLInputElement>('[role="searchbox"]')?.disabled
+    ).toBe(true)
+    expect(html).toContain("scan_dom_missing")
+  })
+
   it("抽出失敗のempty messageを未分類filterでも維持する", () => {
     mocks.detectionResult = { status: "success", elements: [] }
     mocks.extractedFiles = { files: [], skippedCount: 1, totalCount: 1 }
@@ -170,6 +198,121 @@ describe("FigmaExplorerPanel", () => {
     expect(container.textContent).not.toContain(
       "未分類のファイルはありません。"
     )
+
+    act(() => root.unmount())
+  })
+
+  it("ファイル名を検索し未分類filterと組み合わせてクリアできる", () => {
+    mocks.detectionResult = { status: "success", elements: [] }
+    mocks.extractedFiles = {
+      files: [
+        {
+          name: "Dashboard",
+          url: "https://www.figma.com/file/AbC123/Dashboard"
+        },
+        {
+          name: "Landing",
+          url: "https://www.figma.com/file/XyZ987/Landing"
+        }
+      ],
+      skippedCount: 0,
+      totalCount: 2
+    }
+    mocks.organizerFolders = {
+      status: "ready",
+      folders: {
+        "folder-design": {
+          id: "folder-design",
+          name: "Design",
+          parentId: null,
+          sortOrder: 0,
+          createdAt: "2026-07-19T00:00:00.000Z",
+          updatedAt: "2026-07-19T00:00:00.000Z",
+          isSystem: false
+        }
+      },
+      folderTree: [
+        { folderId: "folder-design", expanded: false, children: [] }
+      ],
+      assignments: {
+        AbC123: {
+          fileId: "AbC123",
+          folderId: "folder-design",
+          updatedAt: "2026-07-19T00:00:00.000Z"
+        }
+      },
+      storageError: null,
+      canRetrySave: false
+    }
+    const container = document.createElement("div")
+    const root = createRoot(container)
+
+    act(() => {
+      root.render(
+        <FigmaExplorerPanel href="https://www.figma.com/files/team/drafts" />
+      )
+    })
+
+    const searchInput =
+      container.querySelector<HTMLInputElement>('[role="searchbox"]')
+    const setSearchQuery = (query: string) => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )?.set
+
+      act(() => {
+        valueSetter?.call(searchInput, query)
+        searchInput?.dispatchEvent(new Event("input", { bubbles: true }))
+      })
+    }
+
+    setSearchQuery("DASH")
+
+    expect(container.textContent).toContain("Dashboard")
+    expect(container.textContent).not.toContain("Landing")
+    expect(container.textContent).toContain("表示中1")
+
+    const clearButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "クリア"
+    )
+
+    act(() => clearButton?.click())
+
+    expect(container.textContent).toContain("Dashboard")
+    expect(container.textContent).toContain("Landing")
+
+    const uncategorizedButton = Array.from(
+      container.querySelectorAll("button")
+    ).find((button) => button.textContent?.includes("未分類1"))
+
+    act(() => uncategorizedButton?.click())
+    setSearchQuery("DASH")
+
+    expect(container.textContent).toContain(
+      "検索条件に一致するファイルはありません。"
+    )
+    expect(container.textContent).not.toContain("Dashboard")
+    expect(container.textContent).not.toContain("Landing")
+
+    setSearchQuery("LAND")
+
+    expect(container.textContent).not.toContain("Dashboard")
+    expect(container.textContent).toContain("Landing")
+
+    const folderButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Design"
+    )
+
+    act(() => folderButton?.click())
+
+    const assignButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("へ分類")
+    )
+
+    act(() => assignButton?.click())
+
+    expect(mocks.assignFile).toHaveBeenCalledWith("XyZ987", "folder-design")
 
     act(() => root.unmount())
   })

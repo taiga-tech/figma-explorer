@@ -32,16 +32,17 @@ Figma DOM 依存部分の壊れやすさをテストで補う。ピラミッド�
 
 ## 3. テスト対象マップ
 
-| 対象                                      | 層          | 主な観点                                         |
-| ----------------------------------------- | ----------- | ------------------------------------------------ |
-| create-file-id（予定）                    | unit        | file key 抽出、URL 正規化、hash fallback、安定性 |
-| extract-file-card-metadata                | unit + DOM  | 名前候補の優先順、タイムスタンプ除外、部分失敗   |
-| detect-drafts-page                        | unit        | Drafts / 編集画面 / 他サイトの判定               |
-| detect-file-card-elements                 | DOM fixture | success / empty / error の三値判定               |
-| annotate-file-card-routes                 | DOM fixture | `data-index` 変化時の再解決、失敗時の属性除去    |
-| migration チェーン（予定）                | unit        | 旧→新の変換、将来バージョン・破損の分岐          |
-| folder / filter / export サービス（予定） | unit        | 循環禁止、階層上限、検索、ExportJson 形式        |
-| resolve-file-card-route-from-fiber        | 対象外      | MAIN world 依存のため自動化不能（§5 で担保）     |
+| 対象                               | 層          | 主な観点                                         |
+| ---------------------------------- | ----------- | ------------------------------------------------ |
+| create-file-id（予定）             | unit        | file key 抽出、URL 正規化、hash fallback、安定性 |
+| extract-file-card-metadata         | unit + DOM  | 名前候補の優先順、タイムスタンプ除外、部分失敗   |
+| detect-drafts-page                 | unit        | Drafts / 編集画面 / 他サイトの判定               |
+| detect-file-card-elements          | DOM fixture | success / empty / error の三値判定               |
+| annotate-file-card-routes          | DOM fixture | `data-index` 変化時の再解決、失敗時の属性除去    |
+| migration チェーン（予定）         | unit        | 旧→新の変換、将来バージョン・破損の分岐          |
+| folder / filter サービス           | unit        | 循環禁止、階層上限、検索、絞り込み               |
+| export サービス（予定）            | unit        | ExportJson 形式                                  |
+| resolve-file-card-route-from-fiber | 対象外      | MAIN world 依存のため自動化不能（§5 で担保）     |
 
 fiber 探索は jsdom 上で React 内部構造を再現できないため自動テストしない。
 代わりに探索の入出力境界（ルートパターンの正規表現マッチ等）だけを

@@ -6,15 +6,16 @@
 `src/figma-explorer/components/FigmaExplorerPanel.tsx` をコンテナ、
 `OrganizerPanel` を表示層として、検出・抽出結果の一覧とフォルダツリー・作成 UI
 に加え、保存済み分類情報の合成と分類・未分類化 UI まで提供している。
-全件／未分類フィルターも `SummaryCards` から切り替えられる。検索・JSON 出力を
-統合する `OrganizerApp` は次段階で追加する。
+全件／未分類フィルターは `SummaryCards`、ファイル名検索は `SearchBox` から
+操作できる。JSON 出力を統合する `OrganizerApp` は次段階で追加する。
 
 | 段階 | 内容                                                          | 状態   |
 | ---- | ------------------------------------------------------------- | ------ |
 | 1    | `OrganizerPanel` とフォルダ UI を FigmaExplorerPanel から接続 | 完了   |
 | 2    | FigmaExplorerPanel で Storage と DraftFile の分類情報を合成   | 完了   |
 | 3    | SummaryCards から全件／未分類フィルターを切り替え             | 完了   |
-| 4    | `OrganizerApp` へ検索・JSON 出力を統合                        | 未実装 |
+| 4    | SearchBox から大文字小文字を区別しない名前検索                | 完了   |
+| 5    | `OrganizerApp` へ JSON 出力を統合                             | 未実装 |
 
 ## 2. 画面構成
 
@@ -71,6 +72,7 @@ contents/figma-explorer.tsx
 └─ FigmaExplorerPanel
    └─ OrganizerPanel
       ├─ PanelHeader
+      ├─ SearchBox
       ├─ SummaryCards
       ├─ FolderSection
       │  └─ FolderTree
